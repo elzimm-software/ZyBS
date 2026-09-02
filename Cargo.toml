@@ -1,0 +1,11 @@
+[workspace]
+resolver = "3"
+members = ["crates/zybs-cli","crates/zybs-core", "crates/zybs-gui"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+license = "BSD-3"
+
+[workspace.dependencies]
+zybs-core = { path = "crates/zybs-core" }
