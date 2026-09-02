@@ -5,20 +5,18 @@ ZyBS (pronounced Zeebs) is a build system abstraction framework.
 It's purpose is to abstract as much, or as little, of a build system's complexity away from the novice programmer as is desired.
 
 ** Philosophy
-Build systems are complex; and rightfully so.
-In a world of varied and shifting software and hardware standards, build systems need to be robust and adaptable.
-But the same tools that experienced developers leverage for consistent and reproducible builds across a range of systems, can be extremely daunting for beginners.
+Build systems are complex; and rightfully so. In a world of varied and shifting software and hardware standards, build systems need to be robust and adaptable. But the same tools that experienced developers leverage for consistent and reproducible builds across a range of systems, can be extremely daunting for beginners.
 
 ZyBS's purpose is to let an experienced developer collapse an entire build down to a single =Screen= (and thus a single command), while allowing a novice programmer to peel that abstraction back one piece at a time, exposing only as much complexity as they're ready for, or as much feature access as they need.
 
-This abstraction is a learning tool. Every =Screen= a novice removes has a defined, named responsibility they are taking on themselves.  The goal is that a learner always understands exactly what new thing they are now on the hook for, never more, never less.
+Every =Screen= a novice removes has a defined, named responsibility they are taking on themselves. The goal is that a learner always understands exactly what new thing they are now on the hook for, never more, never less.
 
 ** File Types
 ZyBS is built on three distinct files, each with a separate author and a separate job:
 
-- =.zyl=: written by an experienced developer. Defines the abstraction itself: the full =Screen= hierarchy for a given build system. See [[=.zyl= File]].
-- =Zyfile=: written by the user of a project. A small, per-project file that picks one entry =Screen= from a =.zyl= and supplies its arguments. See [[Zyfile]].
-- =.zydoc=: written by an experienced developer, for novices. Purely pedagogical: =Modules= and per-=Screen= descriptions/responsibilities. Has no effect on how a build executes. Named per build system, alongside its =.zyl= (e.g. =CMake.zyl= and =CMake.zydoc=). See [[=.zydoc= File]].
+- =.zyl= — written by an experienced developer. Defines the abstraction itself: the full =Screen= hierarchy for a given build system. See [[=.zyl= File]].
+- =Zyfile= — written by the user of a project. A small, per-project file, in its own custom grammar (not YAML), that picks one entry =Screen= from a =.zyl= and supplies its arguments. See [[Zyfile]].
+- =.zydoc= — written by an experienced developer, for novices. Purely pedagogical: =Modules= and per-=Screen= descriptions/responsibilities. Has no effect on how a build executes. Named per build system, alongside its =.zyl= (e.g. =CMake.zyl= and =CMake.zydoc=). See [[=.zydoc= File]].
 
 A build can run with only a =.zyl= and a =Zyfile= present. A =.zydoc= is always optional and purely additive.
 
@@ -27,7 +25,7 @@ A =Module= is a curated, named grouping of =Screens= at a similar cognitive load
 
 =Modules= are *not* a structural or derived property of the =Screen= hierarchy. A =Screen's= depth in the dependency graph (how many =Subscreens= calls deep it sits) is fully determined by the graph itself and needs no separate bookkeeping. =Modules= exist for a different reason entirely: to let a maintainer make an editorial judgment about which =Screens= belong to the same conceptual "lesson," independent of raw structural depth. A structurally deep =Screen= may be conceptually simple (and belong to an early =Module=); a shallow =Screen= may require real understanding to safely modify (and belong to a late one).
 
-=Modules= are ordered, and that order carries real meaning: a learner peeling back a =Screen= that belongs to a =Module= significantly later than the =Modules= of their other already-peeled =Screens= may be touching something they aren't ready for, or don't yet need. Tooling (CLI/GUI) is expected to use this ordering to surface a caution in that situation. This is a runtime/UX behavior, not a schema validation rule — see [[Execution Semantics]].
+=Modules= are ordered to indicate that a learner peeling back a =Screen= that belongs to a =Module= significantly later than the =Modules= of their other already-peeled =Screens= may be touching something they aren't ready for, or don't yet need. Tooling (CLI/GUI) is expected to use this ordering to surface a caution in that situation. This is a runtime/UX behavior, not a schema validation rule. See [[Execution Semantics]].
 
 =Modules= are defined in the =.zydoc= file, not the =.zyl= file — see [[=.zydoc= File]].
 
@@ -325,26 +323,71 @@ Each entry in ~subscreens~ has the shape:
 #+end_src
 
 * Zyfile
-A =Zyfile= (no extension, in the tradition of =Dockerfile=) is the user-written, per-project build file. It is deliberately small: it names which =.zyl= file to use, picks a single entry =Screen= from it, and supplies that screen's arguments. It does not define new =Screens=, and it does not override topmatter (vars, sigils, outputs, etc.) — anything beyond entry-point selection belongs in the =.zyl= file itself.
+A =Zyfile= (in the tradition of =Dockerfile=) is the user-written, per-project build file. It is deliberately small: it names which =.zyl= file to use, and invokes one or more =Screens= as function-style calls, supplying their arguments directly. It does not define new =Screens=, and it does not override topmatter (vars, sigils, outputs, etc.) — anything beyond screen invocation belongs in the =.zyl= file itself.
 
-** Format
+Unlike =.zyl=/=.zydoc=/=.zystate=, a =Zyfile= is *not* YAML — it uses its own small, custom grammar, purpose-built to read like an invocation rather than a config file.
+
+** Grammar
+A =Zyfile= consists of a sequence of function-style calls, one per line:
+
+#+begin_src text
+zyfile_version(0.0.1)
+zyl(./CMake.zyl)
+
+binary(bin_name: myapp)
+library(lib_name: mylib, sources: foo.cpp bar.cpp)
+#+end_src
+
+- ~zyfile_version(<version>)~ — required, first line. Pins the Zyfile grammar version this file was written against.
+- ~zyl(<path>)~ — required, exactly once. Path to the =.zyl= file this Zyfile invokes.
+- A call whose name matches a =Screen= in the target =.zyl= binds that screen's ~params~ via its keyword arguments. **The first screen call encountered is the entry point** — the root of traversal — with no separate directive needed to name it, the same convention a Makefile uses for its default target. Every subsequent screen call supplies args for a =Screen= the user has peeled back — see [[.zystate]].
+- Arguments are comma-separated ~key: value~ pairs inside the call's parentheses.
+  - A bare, unquoted value with no top-level comma is split on whitespace: one token is a scalar, several form a space-separated list (e.g. ~sources: foo.cpp bar.cpp~).
+  - A bracketed, comma-separated value is always a list (e.g. ~sources: [foo.cpp, bar.cpp]~) — needed whenever list items must coexist with other ~key: value~ pairs in the same call, since the brackets protect the internal commas from being read as pair separators.
+  - A value containing a literal space that must stay one scalar (not be split into a list) is wrapped in double quotes: ~flag: "some value"~.
+  - ~#~ starts a line comment, to end of line.
+
+Full, proper raw-string support (CMake-style ~R"(...)"~, for values containing unescaped quotes/backslashes/newlines) is a deferred stretch goal — see [[Future Considerations]].
+
+** Naming
+When a project has only one build system, its Zyfile is named plainly: =Zyfile=. When a project has more than one =.zyl= present and thus needs more than one Zyfile, each is named =Zyfile.<build_system>=, following the =Dockerfile.<variant>= convention (e.g. =Zyfile.CMake=, =Zyfile.Bazel=) — the reverse of the =.zyl=/=.zydoc=/=.zystate= naming order, since a Zyfile's own identity comes first and the build system is a qualifier on it, rather than the other way around. See [[Command Line Interface]] for how ~-b~ resolves which Zyfile a command targets.
+
+** Validation and Peeling
+A Zyfile is validated against whichever =.zystate= currently applies for its build system (project-scoped, if present; otherwise system-scoped) — every screen name in that =.zystate='s ~active_screens~ must have a corresponding call in the Zyfile, in addition to the always-required entry call. A missing call is a hard build failure, and the error names exactly which screen needs a call and what params it expects — seeded with the value the =.zyl= currently supplies for it internally, where one exists, so the user starts from a concrete, working value rather than a blank slate.
+
+A screen call present in the Zyfile for a screen no longer listed in ~active_screens~ (the user has since run ~zybs return~ on it) is a lint warning, not an error — the file is left untouched, for the user to clean up at their own pace.
+
+**No tool ever writes to a Zyfile.** ~zybs peel~ and ~zybs return~ only ever modify =.zystate= — see [[.zystate]]. This is deliberate: the still-failing build's guiding error message is the entire teaching mechanism, and auto-editing the Zyfile on the user's behalf would remove the moment the learning actually happens.
+
+* .zystate
+A =<build_system>.zystate= file tracks which =Screens= are currently "active" (peeled back) for a given build system, independently of the =Zyfile= itself. It exists at two possible scopes:
+
+- *System-scoped* — lives with the user, not the project, keyed per build system. Expresses that user's personal default: how peeled they generally like starting a new project of this kind.
+- *Project-scoped* — lives with the project. When present for a given build system, it entirely replaces the system-scoped file for that build system in that project — no merging.
+
 #+begin_src yaml
+# e.g. ~/.config/zybs/CMake.zystate (system-scoped)
 version: 0.0.1
-zyl: ./CMake.zyl
-screen: binary
-args:
-  bin_name: myapp
+active_screens: [library, binary]
+#+end_src
+
+#+begin_src yaml
+# e.g. ./CMake.zystate (project-scoped)
+version: 0.0.1
+active_screens: [library, binary]
 #+end_src
 
 ** Fields
-| Field     | Type    | Required | Description                                              |
-|-----------+---------+----------+------------------------------------------------------------|
-| ~version~ | string  | yes      | ZyBS spec version this Zyfile targets                    |
-| ~zyl~     | string  | yes      | Path to the =.zyl= file this Zyfile invokes               |
-| ~screen~  | string  | yes      | Name of the entry =Screen= within that =.zyl= file        |
-| ~args~    | map     | no       | Arguments bound to the entry screen's declared ~params~   |
+| Field             | Type            | Required | Description                                          |
+|-------------------+-----------------+----------+---------------------------------------------------------|
+| ~version~         | string          | yes      | ZyBS spec version this =.zystate= targets            |
+| ~active_screens~  | list of string  | yes      | Screens currently peeled back for this build system  |
 
-Invoking a =Zyfile= triggers the same depth-first traversal described in [[Execution Semantics]], starting from the named ~screen~ as the root, with ~args~ bound exactly as any other screen call would bind them.
+** ~zybs peel~ and ~zybs return~
+~zybs peel <screen>~ adds a screen name to the project-scoped =.zystate='s ~active_screens~ (creating the file if absent). ~zybs return <screen>~ removes it. Neither command ever touches the =Zyfile= — see [[Validation and Peeling]].
+
+** Shared Screens (DAG) Caveat
+Because =Screens= form a DAG rather than a strict tree, a single peeled screen name may be reachable from more than one parent (e.g. ~target_sources~ called from both ~library~ and ~binary~). The current assumption is that peeling is *uniform by name*: one Zyfile call for that screen name supplies its args regardless of which parent would otherwise have called it. Path-scoped peeling — letting the same shared screen be peeled differently depending on which parent reaches it — is a deferred question; see [[Future Considerations]].
 
 * =.zydoc= File
 A =.zydoc= file (pronounced Zydoc, extension matching its paired =.zyl= file — e.g. =CMake.zyl= alongside =CMake.zydoc=) is the companion pedagogical document to a =.zyl= file. It carries everything a learner-facing GUI/CLI needs to describe =Screens= and =Modules= to a novice — what a =Screen= does, what taking it on means, and how =Screens= group into a learning progression — with zero effect on how a build actually executes.
@@ -410,6 +453,75 @@ screen_docs:
 
 Every =Screen= in the target =.zyl= file should have a corresponding ~screen_docs~ entry; a =.zyl= screen with no entry is not a schema error (the .zydoc file may simply be incomplete), but should be flagged by tooling as a warning.
 
+* Command Line Interface
+Both the CLI and a GUI are clients of one common API — the GUI does not wrap or shell out to the CLI, and the CLI contains no logic the API itself lacks. This is the actual mechanism behind "no feature of the GUI should be impossible with the CLI": it holds because both are built on the same underlying operation set, not because one happens to expose everything the other does. The GUI's role is to give beginners a comfortable environment; the CLI's role is to be the real development workflow they're gradually drawn into — both are expected to remain equally capable at every operation described below.
+
+** Global Flags
+- ~-b~, ~--build-system <name>~ — selects which build system's =.zyl=/=.zydoc=/=.zystate=/=Zyfile= a command operates against, needed whenever more than one is present in a project.
+
+Resolution, based on how many Zyfiles are present and whether ~-b~ is given:
+| Zyfiles found | ~-b~ given          | Result                |
+|---------------+---------------------+------------------------|
+| 1             | no                  | use it                |
+| 1             | yes, matches        | use it                |
+| 1             | yes, doesn't match  | error                 |
+| 2+            | no                  | error (ambiguous)     |
+| 2+            | yes, matches one    | use that one          |
+| 2+            | yes, matches none   | error                 |
+
+** Project Lifecycle
+- ~zybs init~ — scaffold a new project: pick/confirm a =.zyl=, write a minimal starting =Zyfile= with a first call for the =.zyl='s designated default/simplest entry screen.
+- ~zybs build~ — full pipeline: validate, resolve =.zystate=, generate output files, invoke ~build_system_cmd~.
+- ~zybs generate~ — same as ~build~ minus the final invocation; writes output files for inspection without building.
+  - ~--output <file>~ — restrict generation to a single declared output file.
+  - ~--debug~ — prints every global var, string expansion, directory discovery, subscreen call, and output write as it happens, in a tagged, grep-friendly format — see [[Debug Output]].
+  - ~--debug-filter <tags>~ — narrows ~--debug~ output to a comma-separated list of tags.
+
+** Screen State
+- ~zybs peel <screen>~ — see [[.zystate]].
+- ~zybs return <screen>~ — see [[.zystate]].
+
+** Inspection
+- ~zybs tree~ — renders the pyramid in the terminal, marking active vs. collapsed screens and their modules.
+- ~zybs screens~ — flat list of every screen in the =.zyl=, with module, one-line description, and active state.
+- ~zybs show <screen>~ — full detail: description, responsibility, params, ~uses_directories~, output/bucket, current active state.
+  - ~--resolved~ — prints the fully substituted command text (vars/args/discovery all resolved) rather than the raw template.
+- ~zybs modules~ — lists modules in order, each with its screens and (if a current project exists) distance from the user's current active set.
+- ~zybs which-directories <screen>~ — prints a composite screen's computed (unioned) ~uses_directories~, since that value is derived, not authored — see [[Directory Dependencies]].
+
+** Validation
+- ~zybs validate~ — runs every lint/schema rule across =.zyl=/=.zydoc=/=Zyfile=/=.zystate= without building anything.
+  - ~--fix~ — applies only mechanically-safe fixes (a stale =.zydoc= ~target_version~, ~outputs~/~buckets~ ordering, a missing ~screen_docs~ stub). Never writes to a =Zyfile=, consistent with [[Validation and Peeling]].
+  - ~--strict~ — treats warnings (an unused peel call, incomplete ~screen_docs~, etc.) as hard failures.
+  - ~--zyl-only~ / ~--zydoc-only~ — scopes a validation pass to one file.
+
+** Authoring
+- ~zybs new screen <name>~ — interactive wizard that scaffolds a new =Screen= stub directly into the =.zyl= (leaf or composite, ~output~/~bucket~, ~uses_directories~, ~params~).
+- ~zybs new zydoc-entry <screen>~ — scaffolds a ~screen_docs~ stub (with placeholder text) for a screen ~validate~ flagged as undocumented.
+- ~zybs fmt~ — canonicalizes a =.zyl=/=.zydoc='s YAML formatting.
+- ~zybs completions <shell>~ — generates shell completions.
+
+** Debug Output
+~zybs generate --debug~ prints one tagged line per event, so a specific category can be isolated with a plain ~grep~ or narrowed with ~--debug-filter~:
+
+- ~[VAR]~ — initial state of every global var and resolved directory alias, printed once up front.
+- ~[DISCOVER]~ — a directory scan firing (topmatter or ~$discover~), with match count and files.
+- ~[CALL]~ — entering a subscreen, with its bound args, in traversal order — the depth-first walk made visible.
+- ~[EXPAND]~ — a single ~$~/~@~ resolution at a specific interpolation site.
+- ~[MUTATE]~ — a ~$~-sigiled param write changing a global var, with before/after value and the call responsible. The primary tool for diagnosing the sibling global-mutation footgun described in [[Global Mutation]].
+- ~[WRITE]~ — a leaf appending resolved text to a specific ~(output, bucket)~ buffer.
+- ~[ASSEMBLE]~ — the final per-file bucket concatenation, once traversal completes.
+
+#+begin_src text
+[VAR]      build_dir = ./build
+[DISCOVER] src -> sources: matched 2 files (foo.cpp, bar.cpp)
+[CALL]     binary -> target_sources  args={sources: ./build/main.cpp}
+[EXPAND]   @sources -> "./build/main.cpp"          (site: target_sources.commands[0])
+[MUTATE]   cxx_flags: [-Wall, -Wextra, -O2] -> [-O3]   (via binary's $cxx_flags param)
+[WRITE]    src/CMakeLists.txt:sources <- "add_library(core_sources OBJECT ./build/main.cpp)"
+[ASSEMBLE] CMakeLists.txt <- header, project_setup, targets, linking
+#+end_src
+
 * Future Considerations
 The following are known open questions, deliberately deferred rather than resolved, and not part of the current spec:
 
@@ -418,3 +530,5 @@ The following are known open questions, deliberately deferred rather than resolv
 - *Command-length / responsibility linting* — a soft lint nudging leaf screens with unusually large or multi-purpose ~commands~ toward decomposition into ~subscreens~, in service of the one-screen-one-responsibility principle.
 - *Naming smell linting* — flagging screen names containing conjunctions (e.g. ~_and_~) as a signal that a screen may be covering more than one responsibility.
 - *Sibling global-mutation collisions* — a possible lint warning when two screens likely to be executed in sequence both declare a ~$~-sigiled param of the same name, since the outcome becomes order-dependent.
+- *Raw strings in Zyfile values* — CMake-style ~R"(...)"~ syntax for values containing unescaped quotes, backslashes, or newlines without manual escaping.
+- *Path-scoped peeling* — allowing a shared (DAG) subscreen to be peeled with different args depending on which parent reaches it, rather than the current uniform-by-name assumption.
