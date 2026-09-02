@@ -88,16 +88,59 @@ A =Screen= declares its ~params~ up front. Each param may optionally be *sigiled
 See [[Interpolation Grammar]] for full sigil, escaping, and formatting rules used inside ~commands~ and ~output~.
 
 ** Output
-A leaf =Screen= must declare ~output~: the file its ~commands~ are written to. Composite =Screens= never declare ~output~ — they perform no emission of their own; output is strictly a leaf concern, which is the dividing line between subscreen composition and command lists.
+A leaf =Screen= must declare ~output~: the file its ~commands~ are written to, and optionally ~bucket~: which named region of that file its content belongs to. Composite =Screens= never declare ~output~ or ~bucket~ — they perform no emission of their own; output is strictly a leaf concern, which is the dividing line between subscreen composition and command lists.
 
 ~output~ participates fully in [[Interpolation Grammar][interpolation]], including both ~$~ (global vars) and ~@~ (params) sigils. Allowing ~@~ in ~output~ lets a composite screen's caller determine where a file is written (e.g. a directory name), which is itself a deliberate teaching tool — letting a learner see an argument control *where* something lives, not just *what* gets built.
 
+*** Buckets
+An output file may declare one or more named ~buckets~: non-contiguous regions of the final file, assembled in a fixed, declared order. This lets a leaf whose single responsibility nonetheless requires code in several places in the underlying build system's syntax (e.g. an ~include()~ near the top, a target declaration in the middle, linking near the bottom) do so without that being mistaken for multiple responsibilities.
+
+A leaf targets a bucket in one of two ways:
+- *Single-bucket form* (the common case) — ~commands~ stays a flat list, with an optional ~bucket~ field naming which bucket it targets. If ~bucket~ is omitted, it defaults to the first bucket declared for that output file.
+- *Multi-bucket form* — ~commands~ becomes a map from bucket name to that bucket's lines, letting one leaf contribute to several buckets at once. ~bucket~ is not used in this form; the map's keys are the assignment.
+
+#+begin_src yaml
+outputs:
+  - path: CMakeLists.txt
+    buckets: [header, project_setup, targets, linking]
+  - path: src/CMakeLists.txt
+    buckets: [sources]
+#+end_src
+
+#+begin_src yaml
+screens:
+  target_sources:
+    output: src/CMakeLists.txt
+    bucket: sources
+    commands:
+      - add_library(core_sources OBJECT @sources)
+
+  library:
+    output: CMakeLists.txt
+    commands:
+      header:
+        - include(GNUInstallDirs)
+      targets:
+        - add_library(mylib STATIC ...)
+      linking:
+        - target_link_libraries(mylib PUBLIC ...)
+#+end_src
+
+If an output file declares no ~buckets~ list at all, it implicitly has exactly one bucket, named ~default~ — this preserves the original single-block behavior with no migration needed for simple files. Buckets are scoped to the file that declares them; two different output files may reuse the same bucket name independently. Bucket names are author-declared only and do not participate in [[Interpolation Grammar][interpolation]].
+
 *** Output Validation
-- ~output~ that contains no sigils is *literal* and is checked against the topmatter ~outputs~ list (typo-catching).
+- ~output~ that contains no sigils is *literal* and is checked against the topmatter ~outputs~ list (typo-catching), including that any declared ~bucket~ is a member of that output's declared bucket set.
 - ~output~ that contains any sigil (~$~ or ~@~) cannot be resolved statically — global vars are themselves mutable during execution, so even a ~$~-only path cannot be assumed known at file-parse time. Such an ~output~ is automatically exempted from the ~outputs~ check; no per-screen override field is needed, since the presence of a sigil is mechanically detectable.
 - If the topmatter sets ~disallow_interpolated_paths: true~, any sigil found in an ~output~ is a hard schema/lint error instead of being exempted — a project-wide style lock for authors who know they will never need dynamic paths.
 - If ~output~ is omitted entirely on a leaf, it defaults to the topmatter ~default_output~.
-- Multiple leaves may target the same ~output~ file. Their emitted content is concatenated in traversal order — see [[Execution Semantics]]. ZyBS performs no semantic conflict detection between leaves sharing an output file; avoiding conflicting build-system code is the author's responsibility.
+- Multiple leaves may target the same ~(output, bucket)~ pair. Their emitted content is concatenated in traversal order — see [[Execution Semantics]]. ZyBS performs no semantic conflict detection between leaves sharing a bucket; avoiding conflicting build-system code is the author's responsibility.
+
+** Directory Dependencies
+A leaf =Screen= declares ~uses_directories~: the list of topmatter ~directories~ entries its ~commands~ actually depend on, whether directly (a path alias) or via a discovery-derived var. An empty list is a meaningful, explicit statement that a screen makes no assumption about project layout and is fully relocatable.
+
+~uses_directories~ is lint-checked against actual usage inside ~commands~ — a declared dependency that isn't referenced, or a reference not covered by the declaration, is a hard error, not a warning.
+
+A composite =Screen= never declares ~uses_directories~ itself. Its effective directory dependency is always computed as the union of everything reachable beneath it in the graph — the same reasoning that keeps [[Module]] membership and structural depth from needing separate, hand-maintained bookkeeping. This gives tooling (CLI/GUI) an always-accurate answer, at any level of the pyramid, to "what parts of the project layout does peeling this screen touch, and can I use a custom structure here." See [[Directory Discovery]] for how ~directories~ itself is declared.
 
 * Interpolation Grammar
 =Screen= ~commands~ and ~output~ strings are not plain text — they are parsed through a small interpolation grammar before being handed to the underlying build system (and, for ~build_system_cmd~, before shell expansion).
@@ -134,11 +177,41 @@ ${cxx_flags:,}   # comma-joined at this site only
 
 Formatting overrides apply identically to both ~$~ and ~@~ sigiled references.
 
+* Directory Discovery
+A =.zyl= file may declare a default directory structure in topmatter, used both for path organization and for automatically discovering files that feed into higher-level =Screens= without an author having to hand-list them.
+
+** Declaring Directories
+#+begin_src yaml
+directories:
+  build_dir: build                              # plain path alias
+  src: ["$sources:*.cpp", "$headers:*.h|*.hpp"]
+  include: ["$headers:*.h|*.hpp"]
+#+end_src
+
+A ~directories~ entry is either:
+- A plain string — a path alias, merged directly into the global ~vars~ namespace (e.g. ~$build_dir~ resolves to ~"build"~). Behaves exactly like any other global var, including being relocatable further down the tree via a ~$~-sigiled param rebind.
+- A list of scan rules of the form ~"$varname:pattern[|pattern...]"~ — each rule scans that directory for files matching the given pattern(s) (multiple patterns separated by ~|~) and appends matches into the named derived var. Multiple directories may feed the same derived var (as ~$headers~ does above, populated from both ~src~ and ~include~); results are concatenated in the order the directories are declared, then in lexical filename order within each directory.
+
+Discovery-derived vars (~$sources~, ~$headers~ above) are resolved once, upfront, before any screen executes — not lazily, and not re-triggered if a directory is later relocated by a ~$~-sigiled param rebind further down the tree. This trades away dynamic re-scanning for predictable, inspectable output, consistent with the rest of this spec. A directory scan that matches zero files is a hard error by default.
+
+** The ~$discover~ Builtin
+Because a directory's own path may itself be interpolated (e.g. a composite screen's caller relocates it via a ~$~-sigiled param), the upfront topmatter scan can't always resolve a final path at parse time. For exactly this ambiguous case, the interpolation grammar (see [[Interpolation Grammar]]) provides one builtin function call:
+
+#+begin_src yaml
+commands:
+  - add_library(extra_sources OBJECT $discover($src))            # reuses $src's declared pattern(s)
+  - add_library(extra_sources OBJECT $discover($src, "*.cc"))    # explicit pattern override
+#+end_src
+
+~discover~ is a reserved word: no author-defined global var or param may be named ~discover~, enforced as a hard schema/lint error on collision. Unlike topmatter directory scanning, a ~$discover~ call resolves at the point it's emitted, against whatever the referenced directory currently resolves to at that point in traversal — the correct behavior specifically because the path feeding it may not have been knowable any earlier.
+
+A discovery-derived var (from topmatter scanning) referenced inside a screen sitting beneath a composite that has re-bound the relevant directory's path is a hard lint error unless that reference goes through ~$discover~ instead — this prevents a screen from silently using a stale, upfront-resolved file list in a subtree where the directory it was scanned from has since moved. See [[Directory Dependencies]] for how a screen declares which directories it depends on in the first place.
+
 * Execution Semantics
 The =Screen= hierarchy is executed *depth-first*: a composite screen's =Subscreens= are fully resolved and emitted before the composite's own ~commands~ (if it had any — composites never do, but this rule generalizes the ordering guarantee). Where a composite calls multiple =Subscreens=, they are emitted strictly in the order listed — order may matter to the underlying build system, and no reordering or parallelization is performed. (Explicit, author-specified ordering independent of list order is a possible future addition if execution is ever parallelized — see [[Future Considerations]].)
 
 ** Output Assembly
-Because leaves may target different ~output~ files, emission is effectively depth-first *per output file*: as the tree is walked, each leaf's ~commands~ are appended to the in-progress content of whichever file its ~output~ names, in traversal order. A single traversal may therefore be assembling several output files concurrently.
+Because leaves may target different ~output~ files and ~buckets~, emission is effectively depth-first *per (output file, bucket)*: as the tree is walked, each leaf's ~commands~ are appended to the in-progress content of whichever bucket its ~output~/~bucket~ (or, in multi-bucket form, each map key) names, in traversal order. Once traversal completes, each output file's final content is produced by concatenating its buckets together in the order they were declared in ~outputs~. A single traversal may therefore be assembling many bucket buffers, across several output files, concurrently.
 
 ** Global Mutation
 Binding a ~$~-sigiled param does not just supply a default — it *writes* to the global ~vars~ map for the remainder of execution, visible to every subsequently-executed screen, regardless of whether that later screen was called by the same parent or an entirely unrelated one. This is intentional shared mutable state, and is the mechanism by which one screen's choices (e.g. setting compiler flags) can be felt by later, structurally unrelated screens.
@@ -159,7 +232,8 @@ A =.zyl= (pronounced Zyle) file defines the build abstraction for a specific bui
 | ~arg_sigil~                     | string          | no       | Override for the param sigil, default ~@~                                  |
 | ~default_sep~                   | string          | no       | Override for the default list-join separator, default space                |
 | ~vars~                          | map             | no       | Global variable map, mutable during execution                              |
-| ~outputs~                       | list of string  | no       | Declared set of valid literal output files, for typo-catching              |
+| ~directories~                   | map             | no       | Default directory structure and discovery rules — see [[Directory Discovery]] |
+| ~outputs~                       | list of object  | no       | Declared output files, each with a ~path~ and optional ~buckets~ list, for typo-catching |
 | ~default_output~                | string          | no       | Output file a leaf uses if it omits ~output~                               |
 | ~disallow_interpolated_paths~   | boolean         | no       | If true, any sigil found in a leaf's ~output~ is a hard error, default false |
 | ~screens~                       | map             | yes      | The screen registry — see [[Screen]]                                        |
@@ -182,18 +256,26 @@ default_sep: " "
 disallow_interpolated_paths: false
 
 outputs:
-  - CMakeLists.txt
-  - src/CMakeLists.txt
-  - CMakePresets.json
+  - path: CMakeLists.txt
+    buckets: [header, project_setup, targets, linking]
+  - path: src/CMakeLists.txt
+    buckets: [sources]
+  - path: CMakePresets.json
 default_output: CMakeLists.txt
 
+directories:
+  build_dir: build
+  src: ["$sources:*.cpp", "$headers:*.h|*.hpp"]
+  include: ["$headers:*.h|*.hpp"]
+
 vars:
-  build_dir: ./build
   cxx_flags: [-Wall, -Wextra, -O2]
 
 screens:
   root_project_setup:
     output: CMakeLists.txt
+    bucket: header
+    uses_directories: []
     commands:
       - cmake_minimum_required(VERSION 3.28)
       - project(myapp)
@@ -201,6 +283,8 @@ screens:
   target_sources:
     params: [sources]
     output: src/CMakeLists.txt
+    bucket: sources
+    uses_directories: [src]
     commands:
       - add_library(core_sources OBJECT @sources)
 
@@ -224,12 +308,14 @@ screens:
 #+end_src
 
 ** Screen Fields
-| Field        | Type              | Required               | Description                                                        |
-|--------------+-------------------+-------------------------+----------------------------------------------------------------------|
-| ~params~     | list of string    | no                      | Declared parameters. May be ~$~-sigiled to auto-bind to a global var |
-| ~commands~   | list of string    | required for leaves     | Literal build-system code. Mutually exclusive with ~subscreens~     |
-| ~output~     | string            | required for leaves     | Output file this leaf's ~commands~ are written to                   |
-| ~subscreens~ | list of object    | required for composites | Calls into other screens. Mutually exclusive with ~commands~/~output~ |
+| Field              | Type                          | Required               | Description                                                        |
+|--------------------+-------------------------------+-------------------------+----------------------------------------------------------------------|
+| ~params~           | list of string                | no                      | Declared parameters. May be ~$~-sigiled to auto-bind to a global var |
+| ~commands~         | list of string, or map of string to list of string | required for leaves | Literal build-system code. Map form assigns per-bucket; list form uses ~bucket~. Mutually exclusive with ~subscreens~ |
+| ~output~           | string                        | required for leaves     | Output file this leaf's ~commands~ are written to                   |
+| ~bucket~           | string                        | no                      | Which bucket of ~output~ this leaf targets (list form only). Defaults to the first declared bucket |
+| ~uses_directories~ | list of string                | required for leaves     | Which topmatter ~directories~ this leaf depends on. Never declared on composites — see [[Directory Dependencies]] |
+| ~subscreens~       | list of object                | required for composites | Calls into other screens. Mutually exclusive with ~commands~/~output~/~bucket~/~uses_directories~ |
 
 Each entry in ~subscreens~ has the shape:
 #+begin_src yaml
