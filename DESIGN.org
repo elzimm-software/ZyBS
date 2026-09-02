@@ -1,0 +1,334 @@
+#+title: ZyBS Design
+
+* ZyBS
+ZyBS (pronounced Zeebs) is a build system abstraction framework.
+It's purpose is to abstract as much, or as little, of a build system's complexity away from the novice programmer as is desired.
+
+** Philosophy
+Build systems are complex; and rightfully so.
+In a world of varied and shifting software and hardware standards, build systems need to be robust and adaptable.
+But the same tools that experienced developers leverage for consistent and reproducible builds across a range of systems, can be extremely daunting for beginners.
+
+ZyBS's purpose is to let an experienced developer collapse an entire build down to a single =Screen= (and thus a single command), while allowing a novice programmer to peel that abstraction back one piece at a time, exposing only as much complexity as they're ready for, or as much feature access as they need.
+
+This abstraction is a learning tool. Every =Screen= a novice removes has a defined, named responsibility they are taking on themselves.  The goal is that a learner always understands exactly what new thing they are now on the hook for, never more, never less.
+
+** File Types
+ZyBS is built on three distinct files, each with a separate author and a separate job:
+
+- =.zyl=: written by an experienced developer. Defines the abstraction itself: the full =Screen= hierarchy for a given build system. See [[=.zyl= File]].
+- =Zyfile=: written by the user of a project. A small, per-project file that picks one entry =Screen= from a =.zyl= and supplies its arguments. See [[Zyfile]].
+- =.zydoc=: written by an experienced developer, for novices. Purely pedagogical: =Modules= and per-=Screen= descriptions/responsibilities. Has no effect on how a build executes. Named per build system, alongside its =.zyl= (e.g. =CMake.zyl= and =CMake.zydoc=). See [[=.zydoc= File]].
+
+A build can run with only a =.zyl= and a =Zyfile= present. A =.zydoc= is always optional and purely additive.
+
+* Module
+A =Module= is a curated, named grouping of =Screens= at a similar cognitive load, used to structure the learning experience.
+
+=Modules= are *not* a structural or derived property of the =Screen= hierarchy. A =Screen's= depth in the dependency graph (how many =Subscreens= calls deep it sits) is fully determined by the graph itself and needs no separate bookkeeping. =Modules= exist for a different reason entirely: to let a maintainer make an editorial judgment about which =Screens= belong to the same conceptual "lesson," independent of raw structural depth. A structurally deep =Screen= may be conceptually simple (and belong to an early =Module=); a shallow =Screen= may require real understanding to safely modify (and belong to a late one).
+
+=Modules= are ordered, and that order carries real meaning: a learner peeling back a =Screen= that belongs to a =Module= significantly later than the =Modules= of their other already-peeled =Screens= may be touching something they aren't ready for, or don't yet need. Tooling (CLI/GUI) is expected to use this ordering to surface a caution in that situation. This is a runtime/UX behavior, not a schema validation rule — see [[Execution Semantics]].
+
+=Modules= are defined in the =.zydoc= file, not the =.zyl= file — see [[=.zydoc= File]].
+
+** Fields
+| Field         | Type              | Required | Description                                             |
+|---------------+-------------------+----------+----------------------------------------------------------|
+| ~id~          | string            | yes      | Unique identifier for the module                        |
+| ~order~       | integer           | yes      | Explicit ordinal. Used to compute "distance" between modules for readiness cautions. Not inferred from list position. |
+| ~title~       | string            | yes      | Short, learner-facing name for the module                |
+| ~description~ | string (block)    | no       | Prose explaining what this module covers conceptually    |
+| ~screens~     | list of string    | yes      | Screen names belonging to this module                    |
+
+Every =Screen= defined in the corresponding =.zyl= file must appear in exactly one =Module's= ~screens~ list — no orphans, no duplicate placement.
+
+* Screen
+A =Screen= abstracts either a single piece of literal, underlying build-system code, or a group of other, less-abstracted =Screens=. A =Screen= is one of exactly two kinds, mutually exclusive:
+
+- A *leaf* screen, which has ~commands~: literal build-system code, and nothing else.
+- A *composite* screen, which has ~subscreens~: a call graph into other =Screens=, and nothing else.
+
+A =Screen= has exactly one of ~commands~ or ~subscreens~ — never both, never neither.
+
+Each =Screen=, and especially each leaf =Screen=, should handle exactly one distinct responsibility. A composite =Screen's= own responsibility is the *new* thing it introduces at its level — not a restatement of what its =Subscreens= already cover.
+
+** Leaf Screens
+A leaf screen contains ~commands~: an ordered list of literal, pure build-system code. ~commands~ must not reference other =Screens= by name; they are opaque strings to ZyBS other than for [[Interpolation Grammar][interpolation]] purposes.
+
+#+begin_src yaml
+target_sources:
+  params: [sources]
+  output: src/CMakeLists.txt
+  commands:
+    - add_library(core_sources OBJECT @sources)
+#+end_src
+
+** Composite Screens
+A composite screen contains ~subscreens~: an ordered list of calls into other =Screens=. Each call names the =Screen= being included and explicitly binds arguments to that =Screen's= declared ~params~. Argument binding is entirely at the calling =Screen's= discretion — arguments are never filtered down implicitly from a parent's own params or vars.
+
+#+begin_src yaml
+binary:
+  params: [bin_name]
+  subscreens:
+    - screen: target_sources
+      args:
+        sources: ${build_dir}/main.cpp
+  commands:
+    - add_executable(@bin_name ...)
+#+end_src
+
+The same =Screen= may be called from multiple different parents (a DAG, not a strict tree), each parent supplying its own argument bindings independently.
+
+** Params and Sigils
+A =Screen= declares its ~params~ up front. Each param may optionally be *sigiled*:
+
+- An un-sigiled param (e.g. ~sources~) must be supplied via ~args~ at every call site.
+- A ~$~-sigiled param (e.g. ~$cxx_flags~) is automatically bound to the global var of the same name at invocation — syntactic sugar for an implicit ~args~ binding to that global. Binding a ~$~-sigiled param *writes* the supplied value into the global var, mutating it for the remainder of execution (see [[Global Mutation]]). An explicit ~vars:~ entry may still override this implicit binding at a call site, but this should produce a linter warning, since it silently defeats the screen's declared binding.
+
+See [[Interpolation Grammar]] for full sigil, escaping, and formatting rules used inside ~commands~ and ~output~.
+
+** Output
+A leaf =Screen= must declare ~output~: the file its ~commands~ are written to. Composite =Screens= never declare ~output~ — they perform no emission of their own; output is strictly a leaf concern, which is the dividing line between subscreen composition and command lists.
+
+~output~ participates fully in [[Interpolation Grammar][interpolation]], including both ~$~ (global vars) and ~@~ (params) sigils. Allowing ~@~ in ~output~ lets a composite screen's caller determine where a file is written (e.g. a directory name), which is itself a deliberate teaching tool — letting a learner see an argument control *where* something lives, not just *what* gets built.
+
+*** Output Validation
+- ~output~ that contains no sigils is *literal* and is checked against the topmatter ~outputs~ list (typo-catching).
+- ~output~ that contains any sigil (~$~ or ~@~) cannot be resolved statically — global vars are themselves mutable during execution, so even a ~$~-only path cannot be assumed known at file-parse time. Such an ~output~ is automatically exempted from the ~outputs~ check; no per-screen override field is needed, since the presence of a sigil is mechanically detectable.
+- If the topmatter sets ~disallow_interpolated_paths: true~, any sigil found in an ~output~ is a hard schema/lint error instead of being exempted — a project-wide style lock for authors who know they will never need dynamic paths.
+- If ~output~ is omitted entirely on a leaf, it defaults to the topmatter ~default_output~.
+- Multiple leaves may target the same ~output~ file. Their emitted content is concatenated in traversal order — see [[Execution Semantics]]. ZyBS performs no semantic conflict detection between leaves sharing an output file; avoiding conflicting build-system code is the author's responsibility.
+
+* Interpolation Grammar
+=Screen= ~commands~ and ~output~ strings are not plain text — they are parsed through a small interpolation grammar before being handed to the underlying build system (and, for ~build_system_cmd~, before shell expansion).
+
+** Sigils
+Two sigils are recognized:
+
+- ~$name~ — resolves against the global ~vars~ map, in whatever state it currently holds (which may have been mutated by an earlier-executed screen).
+- ~@name~ — resolves against the calling screen's own bound params, as they were passed at this specific call site (frozen at bind time, unaffected by later global mutation).
+
+Both sigil characters may be overridden per-file in topmatter, in case a target build system itself relies heavily on ~$~ or ~@~:
+
+#+begin_src yaml
+global_sigil: "$"   # default
+arg_sigil: "@"      # default
+#+end_src
+
+** Escaping
+A doubled sigil produces a literal instance of that character: ~$$~ → literal ~$~, ~@@~ → literal ~@~. This applies regardless of any ~global_sigil~/~arg_sigil~ override — doubling whatever sigil is configured escapes it.
+
+** Formatting
+When a var or arg resolves to a list, it is joined into a single string. The default join separator is a single space, unless overridden per-file:
+
+#+begin_src yaml
+default_sep: " "   # default
+#+end_src
+
+A separator may also be overridden at a specific interpolation site:
+
+#+begin_src yaml
+${cxx_flags:,}   # comma-joined at this site only
+@sources         # space-joined (or default_sep) — no override given
+#+end_src
+
+Formatting overrides apply identically to both ~$~ and ~@~ sigiled references.
+
+* Execution Semantics
+The =Screen= hierarchy is executed *depth-first*: a composite screen's =Subscreens= are fully resolved and emitted before the composite's own ~commands~ (if it had any — composites never do, but this rule generalizes the ordering guarantee). Where a composite calls multiple =Subscreens=, they are emitted strictly in the order listed — order may matter to the underlying build system, and no reordering or parallelization is performed. (Explicit, author-specified ordering independent of list order is a possible future addition if execution is ever parallelized — see [[Future Considerations]].)
+
+** Output Assembly
+Because leaves may target different ~output~ files, emission is effectively depth-first *per output file*: as the tree is walked, each leaf's ~commands~ are appended to the in-progress content of whichever file its ~output~ names, in traversal order. A single traversal may therefore be assembling several output files concurrently.
+
+** Global Mutation
+Binding a ~$~-sigiled param does not just supply a default — it *writes* to the global ~vars~ map for the remainder of execution, visible to every subsequently-executed screen, regardless of whether that later screen was called by the same parent or an entirely unrelated one. This is intentional shared mutable state, and is the mechanism by which one screen's choices (e.g. setting compiler flags) can be felt by later, structurally unrelated screens.
+
+Because this is order-dependent, sibling =Screens= that both declare a ~$~-sigiled param of the same name may silently affect one another depending on call order. Authors and tooling should treat this as a real footgun class worth linting for, given the intended audience.
+
+* =.zyl= File
+A =.zyl= (pronounced Zyle) file defines the build abstraction for a specific build system: its =Screens=, their commands, and how they assemble into real build-system output. Generally each build system would have one =.zyl= file (e.g. =CMake.zyl= or =GNUMake.zyl=). A =.zyl= file is not itself invoked directly — a project's [[Zyfile]] selects one entry =Screen= from it and supplies that screen's arguments. A =.zyl= file must be fully usable this way with no companion =.zydoc= file present — a =.zydoc= is purely additive pedagogy, never a build dependency. When present, a =.zydoc= shares the =.zyl='s base name (e.g. =CMake.zyl= is documented by =CMake.zydoc=).
+
+** Topmatter
+| Field                          | Type            | Required | Description                                                                 |
+|---------------------------------+-----------------+----------+------------------------------------------------------------------------------|
+| ~version~                       | string          | yes      | ZyBS spec version this file targets                                        |
+| ~build_system~                  | string          | yes      | Display name of the underlying build system                                |
+| ~build_system_cmd~              | list of string  | yes      | Literal commands invoked to run the build                                  |
+| ~description~                   | string (block)  | no       | Prose description of what this file builds                                 |
+| ~global_sigil~                  | string          | no       | Override for the global-var sigil, default ~$~                             |
+| ~arg_sigil~                     | string          | no       | Override for the param sigil, default ~@~                                  |
+| ~default_sep~                   | string          | no       | Override for the default list-join separator, default space                |
+| ~vars~                          | map             | no       | Global variable map, mutable during execution                              |
+| ~outputs~                       | list of string  | no       | Declared set of valid literal output files, for typo-catching              |
+| ~default_output~                | string          | no       | Output file a leaf uses if it omits ~output~                               |
+| ~disallow_interpolated_paths~   | boolean         | no       | If true, any sigil found in a leaf's ~output~ is a hard error, default false |
+| ~screens~                       | map             | yes      | The screen registry — see [[Screen]]                                        |
+
+** Format
+#+begin_src yaml
+version: 0.0.1
+build_system: CMake
+build_system_cmd:
+  - cmake -S . -B $build_dir
+  - cmake --build $build_dir
+
+description: |
+  builds the thing
+  yada yada
+
+global_sigil: "$"
+arg_sigil: "@"
+default_sep: " "
+disallow_interpolated_paths: false
+
+outputs:
+  - CMakeLists.txt
+  - src/CMakeLists.txt
+  - CMakePresets.json
+default_output: CMakeLists.txt
+
+vars:
+  build_dir: ./build
+  cxx_flags: [-Wall, -Wextra, -O2]
+
+screens:
+  root_project_setup:
+    output: CMakeLists.txt
+    commands:
+      - cmake_minimum_required(VERSION 3.28)
+      - project(myapp)
+
+  target_sources:
+    params: [sources]
+    output: src/CMakeLists.txt
+    commands:
+      - add_library(core_sources OBJECT @sources)
+
+  library:
+    params: [lib_name]
+    subscreens:
+      - screen: target_sources
+        args:
+          sources: [src/foo.cpp, src/bar.cpp]
+    commands:
+      - add_library(@lib_name STATIC ...)
+
+  binary:
+    params: [bin_name]
+    subscreens:
+      - screen: target_sources
+        args:
+          sources: ${build_dir}/main.cpp
+    commands:
+      - add_executable(@bin_name ...)
+#+end_src
+
+** Screen Fields
+| Field        | Type              | Required               | Description                                                        |
+|--------------+-------------------+-------------------------+----------------------------------------------------------------------|
+| ~params~     | list of string    | no                      | Declared parameters. May be ~$~-sigiled to auto-bind to a global var |
+| ~commands~   | list of string    | required for leaves     | Literal build-system code. Mutually exclusive with ~subscreens~     |
+| ~output~     | string            | required for leaves     | Output file this leaf's ~commands~ are written to                   |
+| ~subscreens~ | list of object    | required for composites | Calls into other screens. Mutually exclusive with ~commands~/~output~ |
+
+Each entry in ~subscreens~ has the shape:
+#+begin_src yaml
+- screen: <screen name>
+  args:
+    <param name>: <literal value, or $/@ interpolated string>
+#+end_src
+
+* Zyfile
+A =Zyfile= (no extension, in the tradition of =Dockerfile=) is the user-written, per-project build file. It is deliberately small: it names which =.zyl= file to use, picks a single entry =Screen= from it, and supplies that screen's arguments. It does not define new =Screens=, and it does not override topmatter (vars, sigils, outputs, etc.) — anything beyond entry-point selection belongs in the =.zyl= file itself.
+
+** Format
+#+begin_src yaml
+version: 0.0.1
+zyl: ./CMake.zyl
+screen: binary
+args:
+  bin_name: myapp
+#+end_src
+
+** Fields
+| Field     | Type    | Required | Description                                              |
+|-----------+---------+----------+------------------------------------------------------------|
+| ~version~ | string  | yes      | ZyBS spec version this Zyfile targets                    |
+| ~zyl~     | string  | yes      | Path to the =.zyl= file this Zyfile invokes               |
+| ~screen~  | string  | yes      | Name of the entry =Screen= within that =.zyl= file        |
+| ~args~    | map     | no       | Arguments bound to the entry screen's declared ~params~   |
+
+Invoking a =Zyfile= triggers the same depth-first traversal described in [[Execution Semantics]], starting from the named ~screen~ as the root, with ~args~ bound exactly as any other screen call would bind them.
+
+* =.zydoc= File
+A =.zydoc= file (pronounced Zydoc, extension matching its paired =.zyl= file — e.g. =CMake.zyl= alongside =CMake.zydoc=) is the companion pedagogical document to a =.zyl= file. It carries everything a learner-facing GUI/CLI needs to describe =Screens= and =Modules= to a novice — what a =Screen= does, what taking it on means, and how =Screens= group into a learning progression — with zero effect on how a build actually executes.
+
+A =.zydoc= file is purely additive. It must declare which =.zyl= file it documents, and tooling should treat a =.zydoc= referencing a =.zyl= file of a different ~version~ as stale, warning the maintainer that documentation may be out of date relative to the build it describes.
+
+** Format
+#+begin_src yaml
+version: 0.0.1
+target: ./CMake.zyl
+target_version: 0.0.1   # version of the .zyl file this .zydoc file was written against
+
+modules:
+  - id: fundamentals
+    order: 0
+    title: "What actually becomes code"
+    description: >
+      Screens here decide what source files exist and how they're grouped.
+    screens: [target_sources]
+
+  - id: assembly
+    order: 1
+    title: "Turning code into something runnable"
+    description: >
+      Screens here decide how compiled pieces become libraries or executables.
+    screens: [library, binary]
+
+screen_docs:
+  target_sources:
+    description: >
+      Compiles your source files into reusable object code.
+    responsibility: >
+      Listing every source file explicitly, and understanding what an
+      object library is versus a linked one.
+
+  library:
+    description: >
+      Packages compiled objects into a linkable library.
+    responsibility: >
+      Deciding how compiled objects are packaged into a linkable library.
+
+  binary:
+    description: >
+      Produces the runnable executable.
+    responsibility: >
+      Understanding how object code gets linked into a runnable executable.
+#+end_src
+
+** Topmatter
+| Field            | Type    | Required | Description                                                     |
+|------------------+---------+----------+-------------------------------------------------------------------|
+| ~version~        | string  | yes      | ZyBS spec version this .zydoc file targets                           |
+| ~target~         | string  | yes      | Path to the =.zyl= file this .zydoc file documents                   |
+| ~target_version~ | string  | yes      | ~version~ of the target =.zyl= file, for staleness detection     |
+| ~modules~        | list    | yes      | See [[Module]]                                                   |
+| ~screen_docs~    | map     | yes      | Per-screen pedagogical content, keyed by screen name             |
+
+** Screen Documentation Fields
+| Field           | Type           | Required | Description                                                          |
+|-----------------+----------------+----------+-------------------------------------------------------------------------|
+| ~description~   | string (block) | yes      | What the screen does, in learner-facing terms                        |
+| ~responsibility~| string (block) | yes      | What a learner takes on themselves by peeling this screen back        |
+
+Every =Screen= in the target =.zyl= file should have a corresponding ~screen_docs~ entry; a =.zyl= screen with no entry is not a schema error (the .zydoc file may simply be incomplete), but should be flagged by tooling as a warning.
+
+* Future Considerations
+The following are known open questions, deliberately deferred rather than resolved, and not part of the current spec:
+
+- *Explicit subscreen ordering independent of list order* — currently, subscreens execute strictly in list order. If execution is ever parallelized, an explicit ordering/dependency mechanism will be needed to preserve correctness where build-system order matters.
+- *Readiness gating threshold* — the idea that peeling a screen far below a learner's current module should trigger a caution is a tool/UX behavior, not yet decided whether it is configurable per-file (e.g. a topmatter ~readiness_gate_threshold~) or fixed by the tool itself.
+- *Command-length / responsibility linting* — a soft lint nudging leaf screens with unusually large or multi-purpose ~commands~ toward decomposition into ~subscreens~, in service of the one-screen-one-responsibility principle.
+- *Naming smell linting* — flagging screen names containing conjunctions (e.g. ~_and_~) as a signal that a screen may be covering more than one responsibility.
+- *Sibling global-mutation collisions* — a possible lint warning when two screens likely to be executed in sequence both declare a ~$~-sigiled param of the same name, since the outcome becomes order-dependent.
