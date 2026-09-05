@@ -1,24 +1,24 @@
 
 # Table of Contents
 
-1.  [ZyBS (pronounced &ldquo;Zeebs&rdquo;)](#orge6bdb49)
-    1.  [The Problem](#org71f1c65)
-    2.  [Philosophy](#orgaef60f2)
-    3.  [Who It&rsquo;s For](#orga239be8)
-    4.  [How It Works, In Practice](#org3249261)
-    5.  [Key Features](#org6c87570)
-    6.  [In Short](#org9331c5b)
+1.  [ZyBS (pronounced &ldquo;Zeebs&rdquo;)](#orga5d19f4)
+    1.  [The Problem](#org21341bb)
+    2.  [Philosophy](#org840fbc6)
+    3.  [Who It&rsquo;s For](#org5ee4105)
+    4.  [How It Works, In Practice](#org524a0d0)
+    5.  [Key Features](#orgefe5a8e)
+    6.  [In Short](#org0ac67a9)
 
 
 
-<a id="orge6bdb49"></a>
+<a id="orga5d19f4"></a>
 
 # ZyBS (pronounced &ldquo;Zeebs&rdquo;)
 
 A build system abstraction framework for teaching, not just building.
 
 
-<a id="org71f1c65"></a>
+<a id="org21341bb"></a>
 
 ## The Problem
 
@@ -31,7 +31,7 @@ Most tools force a binary choice: give learners a black-box wrapper that hides e
 ZyBS exists to avoid that choice.
 
 
-<a id="orgaef60f2"></a>
+<a id="org840fbc6"></a>
 
 ## Philosophy
 
@@ -54,7 +54,7 @@ Nothing is a grab-bag of unrelated behavior.
 You can run ZyBS with zero teaching material present; the teaching layer is there for when you want it.
 
 
-<a id="orga239be8"></a>
+<a id="org5ee4105"></a>
 
 ## Who It&rsquo;s For
 
@@ -63,7 +63,7 @@ You can run ZyBS with zero teaching material present; the teaching layer is ther
 -   **Teams** who want new contributors to become self-sufficient with the actual build tooling over time, rather than staying permanently dependent on a hand-maintained wrapper script.
 
 
-<a id="org3249261"></a>
+<a id="org524a0d0"></a>
 
 ## How It Works, In Practice
 
@@ -79,7 +79,7 @@ As a learner grows more comfortable, they &ldquo;peel back&rdquo; layers one at 
 Peeling back a layer well ahead of where you&rsquo;ve been working triggers a gentle caution; a nudge that you might be touching something you&rsquo;re not quite ready for yet, not a hard block.
 
 
-<a id="org6c87570"></a>
+<a id="orgefe5a8e"></a>
 
 ## Key Features
 
@@ -101,7 +101,7 @@ The friction is the point.
 -   **Validation with helpful errors.** Problems are caught early, with error messages designed to teach rather than just fail.
 
 
-<a id="org9331c5b"></a>
+<a id="org0ac67a9"></a>
 
 ## In Short
 

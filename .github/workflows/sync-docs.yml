@@ -1,0 +1,47 @@
+name: Sync docs
+
+# Regenerate the top-level Markdown docs whenever their Org sources change, and
+# commit the result back to the branch that was pushed. This workflow is the
+# source of truth for the .md files; scripts/sync-docs.sh runs the same steps
+# locally for anyone who has Emacs installed.
+
+on:
+  push:
+    branches: ['**']
+    paths:
+      - 'org-files/**.org'
+      - 'scripts/sync-docs.sh'
+      - '.github/workflows/sync-docs.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: sync-docs-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Emacs
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends emacs-nox
+
+      - name: Regenerate Markdown from Org
+        run: scripts/sync-docs.sh
+
+      - name: Commit regenerated docs
+        run: |
+          if git diff --quiet -- '*.md'; then
+            echo "Markdown already in sync with Org sources; nothing to commit."
+            exit 0
+          fi
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -- '*.md'
+          git commit -m "docs: regenerate Markdown from Org sources [skip ci]"
+          git push origin "HEAD:${GITHUB_REF_NAME}"
