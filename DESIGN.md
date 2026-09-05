@@ -1,58 +1,58 @@
 
 # Table of Contents
 
-1.  [ZyBS](#orgadc377f)
-    1.  [Philosophy](#orgc89ca18)
-    2.  [File Types](#org6b10cce)
-2.  [Module](#orgd46e6f1)
-    1.  [Fields](#org0382a50)
-3.  [Screen](#orgab8f675)
-    1.  [Leaf Screens](#org76b7eeb)
-    2.  [Composite Screens](#org232091d)
-    3.  [Params and Sigils](#orgc4fb658)
-    4.  [Output](#org5fb58fa)
-        1.  [Buckets](#orgc315736)
-        2.  [Output Validation](#orgd0fa72c)
-    5.  [Directory Dependencies](#orgc0c99af)
-4.  [Interpolation Grammar](#orgb203ee6)
-    1.  [Sigils](#orgcc93380)
-    2.  [Escaping](#org94aff1d)
-    3.  [Formatting](#orge1a21ca)
-5.  [Directory Discovery](#orgfd568e8)
-    1.  [Declaring Directories](#orgd99d967)
-    2.  [The `$discover` Builtin](#orgfb605a3)
-6.  [Execution Semantics](#orga4febcd)
-    1.  [Output Assembly](#org74e7aca)
-    2.  [Global Mutation](#org6b69716)
-7.  [`.zyl` File](#org6e9f8e2)
-    1.  [Top-Matter](#orga33278a)
-    2.  [Format](#org5f2f00b)
-    3.  [Screen Fields](#org412039a)
-8.  [Zyfile](#org86f5e3a)
-    1.  [Grammar](#org0356039)
-    2.  [Naming](#orgebca8c8)
-    3.  [Validation and Peeling](#org6f0a872)
-9.  [.zystate](#org1d6aff1)
-    1.  [Fields](#orgeeb2db3)
-    2.  [`zybs peel` and `zybs return`](#orgc901e5b)
-    3.  [Shared Screens (DAG) Caveat](#org46cefa4)
-10. [`.zydoc` File](#org66fbb76)
-    1.  [Format](#orgc16544e)
-    2.  [Top-Matter](#orgf1b5b53)
-    3.  [Screen Documentation Fields](#orgba671fd)
-11. [Command Line Interface](#org8433f80)
-    1.  [Global Flags](#org8417550)
-    2.  [Project Lifecycle](#org4587e54)
-    3.  [Screen State](#org07efded)
-    4.  [Inspection](#org8e456c9)
-    5.  [Validation](#orgad89e6e)
-    6.  [Authoring](#org480faff)
-    7.  [Debug Output](#orgda85640)
-12. [Future Considerations](#orgef29a13)
+1.  [ZyBS](#org0ac67a9)
+    1.  [Philosophy](#org21341bb)
+    2.  [File Types](#orgefe5a8e)
+2.  [Module](#org7093327)
+    1.  [Fields](#orgcd99896)
+3.  [Screen](#org3c2260f)
+    1.  [Leaf Screens](#org425f280)
+    2.  [Composite Screens](#org946fa96)
+    3.  [Params and Sigils](#orgafa202f)
+    4.  [Output](#orgde1259e)
+        1.  [Buckets](#orgc280c40)
+        2.  [Output Validation](#org3619c85)
+    5.  [Directory Dependencies](#orgd24ffe2)
+4.  [Interpolation Grammar](#orgcaf0c45)
+    1.  [Sigils](#org62b0148)
+    2.  [Escaping](#org490d75f)
+    3.  [Formatting](#orga2c5151)
+5.  [Directory Discovery](#orgf1e79e0)
+    1.  [Declaring Directories](#org23bf2d3)
+    2.  [The `$discover` Builtin](#orgc428bbe)
+6.  [Execution Semantics](#orga5d19f4)
+    1.  [Output Assembly](#org49ea377)
+    2.  [Global Mutation](#org64f04c2)
+7.  [`.zyl` File](#org840fbc6)
+    1.  [Top-Matter](#org7b2eac1)
+    2.  [Format](#org9634628)
+    3.  [Screen Fields](#orge58d847)
+8.  [Zyfile](#org5ee4105)
+    1.  [Grammar](#org1201310)
+    2.  [Naming](#org0f01231)
+    3.  [Validation and Peeling](#orgcd025e0)
+9.  [.zystate](#orgec9fa2a)
+    1.  [Fields](#org78e7a74)
+    2.  [`zybs peel` and `zybs return`](#org2617583)
+    3.  [Shared Screens (DAG) Caveat](#org9c3253d)
+10. [`.zydoc` File](#org524a0d0)
+    1.  [Format](#orgb037b48)
+    2.  [Top-Matter](#org3b09900)
+    3.  [Screen Documentation Fields](#orgf934d85)
+11. [Command Line Interface](#org8d99f8a)
+    1.  [Global Flags](#orgfa2dfec)
+    2.  [Project Lifecycle](#org4f28fa6)
+    3.  [Screen State](#orgbc98049)
+    4.  [Inspection](#org1b8dd0d)
+    5.  [Validation](#org882f0d0)
+    6.  [Authoring](#org7ebf8b9)
+    7.  [Debug Output](#org3f5d73d)
+12. [Future Considerations](#orgca7e6c3)
 
 
 
-<a id="orgadc377f"></a>
+<a id="org0ac67a9"></a>
 
 # ZyBS
 
@@ -60,7 +60,7 @@ ZyBS (pronounced Zeebs) is a build system abstraction framework.
 It&rsquo;s purpose is to abstract as much, or as little, of a build system&rsquo;s complexity away from the novice programmer as is desired.
 
 
-<a id="orgc89ca18"></a>
+<a id="org21341bb"></a>
 
 ## Philosophy
 
@@ -74,7 +74,7 @@ Every `Screen` a novice removes has a defined, named responsibility they are tak
 The goal is that a learner always understands exactly what new thing they are now on the hook for, never more, never less.
 
 
-<a id="org6b10cce"></a>
+<a id="orgefe5a8e"></a>
 
 ## File Types
 
@@ -83,23 +83,23 @@ ZyBS is built on three distinct files, each with a separate author and a separat
 -   `.zyl`; written by an experienced developer.
 
 Defines the abstraction itself: the full `Screen` hierarchy for a given build system.
-See [7](#org6e9f8e2).
+See [7](#org840fbc6).
 
 -   `Zyfile`; written by the user of a project.
 
 A small, per-project file, in its own custom grammar (not YAML), that picks one entry `Screen` from a `.zyl` and supplies its arguments.
-See [8](#org86f5e3a).
+See [8](#org5ee4105).
 
 -   `.zydoc`; written by an experienced developer, for novices.
 
 Purely pedagogical: `Modules` and per-`Screen` descriptions/responsibilities; has no effect on how a build executes.
 Named per build system, alongside its `.zyl` (eg. `CMake.zyl` and `CMake.zydoc`).
-See [10](#org66fbb76).
+See [10](#org524a0d0).
 
 A build can run with only a `.zyl` and a `Zyfile` present; `.zydoc` is always optional and purely additive.
 
 
-<a id="orgd46e6f1"></a>
+<a id="org7093327"></a>
 
 # Module
 
@@ -113,12 +113,12 @@ A structurally deep `Screen` may be conceptually simple (and belong to an early 
 `Modules` are ordered to indicate that a learner peeling back a `Screen` that belongs to a `Module` significantly later than the `Modules` of their other already-peeled `Screens` may be touching something they aren&rsquo;t ready for, or don&rsquo;t yet need.
 Tooling (CLI/GUI) is expected to use this ordering to surface a caution in that situation.
 This is a runtime/UX behavior, not a schema validation rule.
-See [6](#orga4febcd).
+See [6](#orga5d19f4).
 
-`Modules` are defined in the `.zydoc` file, not the `.zyl` file; see [10](#org66fbb76).
+`Modules` are defined in the `.zydoc` file, not the `.zyl` file; see [10](#org524a0d0).
 
 
-<a id="org0382a50"></a>
+<a id="orgcd99896"></a>
 
 ## Fields
 
@@ -183,7 +183,7 @@ See [6](#orga4febcd).
 Every `Screen` defined in the corresponding `.zyl` file must appear in exactly one `Module's` `screens` list; no orphans, no duplicate placement.
 
 
-<a id="orgab8f675"></a>
+<a id="org3c2260f"></a>
 
 # Screen
 
@@ -199,12 +199,12 @@ Each `Screen`, and especially each leaf `Screen`, should handle exactly one dist
 A composite `Screen's` own responsibility is the **new** thing it introduces at its level.
 
 
-<a id="org76b7eeb"></a>
+<a id="org425f280"></a>
 
 ## Leaf Screens
 
 A leaf screen contains `commands`: an ordered list of literal, pure build-system code.
-`commands` must not reference other `Screens` by name; they are opaque strings to ZyBS other than for [interpolation](#orgb203ee6) purposes.
+`commands` must not reference other `Screens` by name; they are opaque strings to ZyBS other than for [interpolation](#orgcaf0c45) purposes.
 
     target_sources:
       params: [sources]
@@ -213,7 +213,7 @@ A leaf screen contains `commands`: an ordered list of literal, pure build-system
         - add_library(core_sources OBJECT @sources)
 
 
-<a id="org232091d"></a>
+<a id="org946fa96"></a>
 
 ## Composite Screens
 
@@ -233,7 +233,7 @@ Argument binding is entirely at the calling `Screen's` discretion; arguments are
 The same `Screen` may be called from multiple different parents (a DAG, not a strict tree), each parent supplying its own argument bindings independently.
 
 
-<a id="orgc4fb658"></a>
+<a id="orgafa202f"></a>
 
 ## Params and Sigils
 
@@ -243,13 +243,13 @@ Each param may optionally be **sigiled**:
 -   An unsigiled param (eg. `sources`) must be supplied via `args` at every call site.
 -   A `$`-sigiled param (eg. `$cxx_flags`) is automatically bound to the global var of the same name at invocation; syntactic sugar for an implicit `args` binding to that global.
 
-Binding a `$`-sigiled param **writes** the supplied value into the global var, mutating it for the remainder of execution (see [6.2](#org6b69716)).
+Binding a `$`-sigiled param **writes** the supplied value into the global var, mutating it for the remainder of execution (see [6.2](#org64f04c2)).
 An explicit `vars:` entry may still override this implicit binding at a call site, but this should produce a linter warning, since it silently defeats the screen&rsquo;s declared binding.
 
-See [4](#orgb203ee6) for full sigil, escaping, and formatting rules used inside `commands` and `output`.
+See [4](#orgcaf0c45) for full sigil, escaping, and formatting rules used inside `commands` and `output`.
 
 
-<a id="org5fb58fa"></a>
+<a id="orgde1259e"></a>
 
 ## Output
 
@@ -257,11 +257,11 @@ A leaf `Screen` must declare `output`: the file its `commands` are written to, a
 Composite `Screens` never declare `output` or `bucket`, they perform no emission of their own.
 Output is strictly a leaf concern, which is the dividing line between subscreen composition and command lists.
 
-`output` participates fully in [interpolation](#orgb203ee6), including both `$` (global vars) and `@` (params) sigils.
+`output` participates fully in [interpolation](#orgcaf0c45), including both `$` (global vars) and `@` (params) sigils.
 Allowing `@` in `output` lets a composite screen&rsquo;s caller determine where a file is written (eg. a directory name), which is itself a deliberate teaching tool; letting a learner see an argument control **where** something lives, not just **what** gets built.
 
 
-<a id="orgc315736"></a>
+<a id="orgc280c40"></a>
 
 ### Buckets
 
@@ -303,10 +303,10 @@ If `bucket` is omitted, it defaults to the first bucket declared for that output
 
 If an output file declares no `buckets` list at all, it implicitly has exactly one bucket, named `default`; this preserves the original single-block behavior with no migration needed for simple files.
 Buckets are scoped to the file that declares them; two different output files may reuse the same bucket name independently.
-Bucket names are author-declared only and do not participate in [interpolation](#orgb203ee6).
+Bucket names are author-declared only and do not participate in [interpolation](#orgcaf0c45).
 
 
-<a id="orgd0fa72c"></a>
+<a id="org3619c85"></a>
 
 ### Output Validation
 
@@ -319,11 +319,11 @@ Such an `output` is automatically exempted from the `outputs` check; no per-scre
 -   If `output` is omitted entirely on a leaf, it defaults to the top-matter `default_output`.
 -   Multiple leaves may target the same `(output, bucket)` pair.
 
-Their emitted content is concatenated in traversal order; see [6](#orga4febcd).
+Their emitted content is concatenated in traversal order; see [6](#orga5d19f4).
 ZyBS performs no semantic conflict detection between leaves sharing a bucket; avoiding conflicting build-system code is the author&rsquo;s responsibility.
 
 
-<a id="orgc0c99af"></a>
+<a id="orgd24ffe2"></a>
 
 ## Directory Dependencies
 
@@ -333,18 +333,18 @@ An empty list is a meaningful, explicit statement that a screen makes no assumpt
 `uses_directories` is lint-checked against actual usage inside `commands`; a declared dependency that isn&rsquo;t referenced, or a reference not covered by the declaration, is a hard error, not a warning.
 
 A composite `Screen` never declares `uses_directories` itself.
-Its effective directory dependency is always computed as the union of everything reachable beneath it in the graph; the same reasoning that keeps [2](#orgd46e6f1) membership and structural depth from needing separate, hand-maintained bookkeeping.
-This gives tooling (CLI/GUI) an always-accurate answer, at any level of the pyramid, to &ldquo;what parts of the project layout does peeling this screen touch, and can I use a custom structure here.&rdquo; See [5](#orgfd568e8) for how `directories` itself is declared.
+Its effective directory dependency is always computed as the union of everything reachable beneath it in the graph; the same reasoning that keeps [2](#org7093327) membership and structural depth from needing separate, hand-maintained bookkeeping.
+This gives tooling (CLI/GUI) an always-accurate answer, at any level of the pyramid, to &ldquo;what parts of the project layout does peeling this screen touch, and can I use a custom structure here.&rdquo; See [5](#orgf1e79e0) for how `directories` itself is declared.
 
 
-<a id="orgb203ee6"></a>
+<a id="orgcaf0c45"></a>
 
 # Interpolation Grammar
 
 `Screen` `commands` and `output` strings are not plain text; they are parsed through a small interpolation grammar before being handed to the underlying build system (and, for `build_system_cmd`, before shell expansion).
 
 
-<a id="orgcc93380"></a>
+<a id="org62b0148"></a>
 
 ## Sigils
 
@@ -359,7 +359,7 @@ Both sigil characters may be overridden per-file in top-matter, in case a target
     arg_sigil: "@"      # default
 
 
-<a id="org94aff1d"></a>
+<a id="org490d75f"></a>
 
 ## Escaping
 
@@ -367,7 +367,7 @@ A doubled sigil produces a literal instance of that character: `$$` → literal 
 This applies regardless of any `global_sigil~/~arg_sigil` override; doubling whatever sigil is configured escapes it.
 
 
-<a id="orge1a21ca"></a>
+<a id="orga2c5151"></a>
 
 ## Formatting
 
@@ -384,14 +384,14 @@ A separator may also be overridden at a specific interpolation site:
 Formatting overrides apply identically to both `$` and `@` sigiled references.
 
 
-<a id="orgfd568e8"></a>
+<a id="orgf1e79e0"></a>
 
 # Directory Discovery
 
 A `.zyl` file may declare a default directory structure in top-matter, used both for path organization and for automatically discovering files that feed into higher-level `Screens` without an author having to hand-list them.
 
 
-<a id="orgd99d967"></a>
+<a id="org23bf2d3"></a>
 
 ## Declaring Directories
 
@@ -415,12 +415,12 @@ This trades away dynamic re-scanning for predictable, inspectable output, consis
 A directory scan that matches zero files is a hard error by default.
 
 
-<a id="orgfb605a3"></a>
+<a id="orgc428bbe"></a>
 
 ## The `$discover` Builtin
 
 Because a directory&rsquo;s own path may itself be interpolated (eg. a composite screen&rsquo;s caller relocates it via a `$`-sigiled param), the upfront top-matter scan can&rsquo;t always resolve a final path at parse time.
-For exactly this ambiguous case, the interpolation grammar (see [4](#orgb203ee6)) provides one builtin function call:
+For exactly this ambiguous case, the interpolation grammar (see [4](#orgcaf0c45)) provides one builtin function call:
 
     commands:
       - add_library(extra_sources OBJECT $discover($src))            # reuses $src's declared pattern(s)
@@ -430,19 +430,19 @@ For exactly this ambiguous case, the interpolation grammar (see [4](#orgb203ee6)
 Unlike top-matter directory scanning, a `$discover` call resolves at the point it&rsquo;s emitted, against whatever the referenced directory currently resolves to at that point in traversal; the correct behavior specifically because the path feeding it may not have been knowable any earlier.
 
 A discovery-derived var (from top-matter scanning) referenced inside a screen sitting beneath a composite that has re-bound the relevant directory&rsquo;s path is a hard lint error unless that reference goes through `$discover` instead; this prevents a screen from silently using a stale, upfront-resolved file list in a subtree where the directory it was scanned from has since moved.
-See [3.5](#orgc0c99af) for how a screen declares which directories it depends on in the first place.
+See [3.5](#orgd24ffe2) for how a screen declares which directories it depends on in the first place.
 
 
-<a id="orga4febcd"></a>
+<a id="orga5d19f4"></a>
 
 # Execution Semantics
 
 The `Screen` hierarchy is executed **depth-first**: a composite screen&rsquo;s `Subscreens` are fully resolved and emitted before the composite&rsquo;s own `commands` (if it had any; composites never do, but this rule generalizes the ordering guarantee).
 Where a composite calls multiple `Subscreens`, they are emitted strictly in the order listed; order may matter to the underlying build system, and no reordering or parallelization is performed.
-(Explicit, author-specified ordering independent of list order is a possible future addition if execution is ever parallelized; see [12](#orgef29a13).)
+(Explicit, author-specified ordering independent of list order is a possible future addition if execution is ever parallelized; see [12](#orgca7e6c3).)
 
 
-<a id="org74e7aca"></a>
+<a id="org49ea377"></a>
 
 ## Output Assembly
 
@@ -451,7 +451,7 @@ Once traversal completes, each output file&rsquo;s final content is produced by 
 A single traversal may therefore be assembling many bucket buffers, across several output files, concurrently.
 
 
-<a id="org6b69716"></a>
+<a id="org64f04c2"></a>
 
 ## Global Mutation
 
@@ -462,18 +462,18 @@ Because this is order-dependent, sibling `Screens` that both declare a `$`-sigil
 Authors and tooling should treat this as a real footgun class worth linting for, given the intended audience.
 
 
-<a id="org6e9f8e2"></a>
+<a id="org840fbc6"></a>
 
 # `.zyl` File
 
 A `.zyl` (pronounced Zyle) file defines the build abstraction for a specific build system: its `Screens`, their commands, and how they assemble into real build-system output.
 Generally each build system would have one `.zyl` file (eg. `CMake.zyl` or `GNUMake.zyl`).
-A `.zyl` file is not itself invoked directly; a project&rsquo;s [8](#org86f5e3a) selects one entry `Screen` from it and supplies that screen&rsquo;s arguments.
+A `.zyl` file is not itself invoked directly; a project&rsquo;s [8](#org5ee4105) selects one entry `Screen` from it and supplies that screen&rsquo;s arguments.
 A `.zyl` file must be fully usable this way with no companion `.zydoc` file present; a `.zydoc` is purely additive pedagogy, never a build dependency.
 When present, a `.zydoc` shares the `.zyl`&rsquo;s base name (eg. `CMake.zyl` is documented by `CMake.zydoc`).
 
 
-<a id="orga33278a"></a>
+<a id="org7b2eac1"></a>
 
 ## Top-Matter
 
@@ -558,7 +558,7 @@ When present, a `.zydoc` shares the `.zyl`&rsquo;s base name (eg. `CMake.zyl` is
 <td class="org-left"><code>directories</code></td>
 <td class="org-left">map</td>
 <td class="org-left">no</td>
-<td class="org-left">Default directory structure and discovery rules; see <a href="#orgfd568e8">5</a></td>
+<td class="org-left">Default directory structure and discovery rules; see <a href="#orgf1e79e0">5</a></td>
 </tr>
 
 <tr>
@@ -586,13 +586,13 @@ When present, a `.zydoc` shares the `.zyl`&rsquo;s base name (eg. `CMake.zyl` is
 <td class="org-left"><code>screens</code></td>
 <td class="org-left">map</td>
 <td class="org-left">yes</td>
-<td class="org-left">The screen registry; see <a href="#orgab8f675">3</a></td>
+<td class="org-left">The screen registry; see <a href="#org3c2260f">3</a></td>
 </tr>
 </tbody>
 </table>
 
 
-<a id="org5f2f00b"></a>
+<a id="org9634628"></a>
 
 ## Format
 
@@ -664,7 +664,7 @@ When present, a `.zydoc` shares the `.zyl`&rsquo;s base name (eg. `CMake.zyl` is
           - add_executable(@bin_name ...)
 
 
-<a id="org412039a"></a>
+<a id="orge58d847"></a>
 
 ## Screen Fields
 
@@ -778,7 +778,7 @@ Defaults to the first declared bucket |
 </tbody>
 </table>
 
-Never declared on composites; see [3.5](#orgc0c99af) |
+Never declared on composites; see [3.5](#orgd24ffe2) |
 
 <table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
 
@@ -811,7 +811,7 @@ Each entry in `subscreens` has the shape:
         <param name>: <literal value, or $/@ interpolated string>
 
 
-<a id="org86f5e3a"></a>
+<a id="org5ee4105"></a>
 
 # Zyfile
 
@@ -822,7 +822,7 @@ It does not define new `Screens`, and it does not override top-matter (vars, sig
 Unlike `.zyl=/`.zydoc=/=.zystate=, a `Zyfile` is **not** YAML; it uses its own small, custom grammar, purpose-built to read like an invocation rather than a config file.
 
 
-<a id="org0356039"></a>
+<a id="org1201310"></a>
 
 ## Grammar
 
@@ -845,7 +845,7 @@ Path to the `.zyl` file this Zyfile invokes.
 -   A call whose name matches a `Screen` in the target `.zyl` binds that screen&rsquo;s `params` via its keyword arguments.
 
 ****The first screen call encountered is the entry point****; the root of traversal; with no separate directive needed to name it, the same convention a Makefile uses for its default target.
-Every subsequent screen call supplies args for a `Screen` the user has peeled back; see [9](#org1d6aff1).
+Every subsequent screen call supplies args for a `Screen` the user has peeled back; see [9](#orgec9fa2a).
 
 -   Arguments are comma-separated `key: value` pairs inside the call&rsquo;s parentheses.
     -   A bare, unquoted value with no top-level comma is split on whitespace: one token is a scalar, several form a space-separated list (eg. `sources: foo.cpp bar.cpp`).
@@ -853,19 +853,19 @@ Every subsequent screen call supplies args for a `Screen` the user has peeled ba
     -   A value containing a literal space that must stay one scalar (not be split into a list) is wrapped in double quotes: `flag: "some value"`.
     -   `#` starts a line comment, to end of line.
 
-Full, proper raw-string support (CMake-style `R"(...)"`, for values containing unescaped quotes/backslashes/newlines) is a deferred stretch goal; see [12](#orgef29a13).
+Full, proper raw-string support (CMake-style `R"(...)"`, for values containing unescaped quotes/backslashes/newlines) is a deferred stretch goal; see [12](#orgca7e6c3).
 
 
-<a id="orgebca8c8"></a>
+<a id="org0f01231"></a>
 
 ## Naming
 
 When a project has only one build system, its Zyfile is named plainly: `Zyfile`.
 When a project has more than one `.zyl` present and thus needs more than one Zyfile, each is named `Zyfile.<build_system>`, following the `Dockerfile.<variant>` convention (eg. `Zyfile.CMake`, `Zyfile.Bazel`); the reverse of the `.zyl=/`.zydoc=/=.zystate= naming order, since a Zyfile&rsquo;s own identity comes first and the build system is a qualifier on it, rather than the other way around.
-See [11](#org8433f80) for how `-b` resolves which Zyfile a command targets.
+See [11](#org8d99f8a) for how `-b` resolves which Zyfile a command targets.
 
 
-<a id="org6f0a872"></a>
+<a id="orgcd025e0"></a>
 
 ## Validation and Peeling
 
@@ -874,11 +874,11 @@ A missing call is a hard build failure, and the error names exactly which screen
 
 A screen call present in the Zyfile for a screen no longer listed in `active_screens` (the user has since run `zybs return` on it) is a lint warning, not an error; the file is left untouched, for the user to clean up at their own pace.
 
-****No tool ever writes to a Zyfile.**** `zybs peel` and `zybs return` only ever modify `.zystate`; see [9](#org1d6aff1).
+****No tool ever writes to a Zyfile.**** `zybs peel` and `zybs return` only ever modify `.zystate`; see [9](#orgec9fa2a).
 This is deliberate: the still-failing build&rsquo;s guiding error message is the entire teaching mechanism, and auto-editing the Zyfile on the user&rsquo;s behalf would remove the moment the learning actually happens.
 
 
-<a id="org1d6aff1"></a>
+<a id="orgec9fa2a"></a>
 
 # .zystate
 
@@ -902,7 +902,7 @@ When present for a given build system, it entirely replaces the system-scoped fi
     active_screens: [library, binary]
 
 
-<a id="orgeeb2db3"></a>
+<a id="org78e7a74"></a>
 
 ## Fields
 
@@ -944,25 +944,25 @@ When present for a given build system, it entirely replaces the system-scoped fi
 </table>
 
 
-<a id="orgc901e5b"></a>
+<a id="org2617583"></a>
 
 ## `zybs peel` and `zybs return`
 
 `zybs peel <screen>` adds a screen name to the project-scoped `.zystate`&rsquo;s `active_screens` (creating the file if absent).
 `zybs return <screen>` removes it.
-Neither command ever touches the `Zyfile`; see [8.3](#org6f0a872).
+Neither command ever touches the `Zyfile`; see [8.3](#orgcd025e0).
 
 
-<a id="org46cefa4"></a>
+<a id="org9c3253d"></a>
 
 ## Shared Screens (DAG) Caveat
 
 Because `Screens` form a DAG rather than a strict tree, a single peeled screen name may be reachable from more than one parent (eg. `target_sources` called from both `library` and `binary`).
 The current assumption is that peeling is **uniform by name**: one Zyfile call for that screen name supplies its args regardless of which parent would otherwise have called it.
-Path-scoped peeling; letting the same shared screen be peeled differently depending on which parent reaches it; is a deferred question; see [12](#orgef29a13).
+Path-scoped peeling; letting the same shared screen be peeled differently depending on which parent reaches it; is a deferred question; see [12](#orgca7e6c3).
 
 
-<a id="org66fbb76"></a>
+<a id="org524a0d0"></a>
 
 # `.zydoc` File
 
@@ -973,7 +973,7 @@ A `.zydoc` file is purely additive.
 It must declare which `.zyl` file it documents, and tooling should treat a `.zydoc` referencing a `.zyl` file of a different `version` as stale, warning the maintainer that documentation may be out of date relative to the build it describes.
 
 
-<a id="orgc16544e"></a>
+<a id="orgb037b48"></a>
 
 ## Format
 
@@ -1017,7 +1017,7 @@ It must declare which `.zyl` file it documents, and tooling should treat a `.zyd
           Understanding how object code gets linked into a runnable executable.
 
 
-<a id="orgf1b5b53"></a>
+<a id="org3b09900"></a>
 
 ## Top-Matter
 
@@ -1067,7 +1067,7 @@ It must declare which `.zyl` file it documents, and tooling should treat a `.zyd
 <td class="org-left"><code>modules</code></td>
 <td class="org-left">list</td>
 <td class="org-left">yes</td>
-<td class="org-left">See <a href="#orgd46e6f1">2</a></td>
+<td class="org-left">See <a href="#org7093327">2</a></td>
 </tr>
 
 <tr>
@@ -1080,7 +1080,7 @@ It must declare which `.zyl` file it documents, and tooling should treat a `.zyd
 </table>
 
 
-<a id="orgba671fd"></a>
+<a id="orgf934d85"></a>
 
 ## Screen Documentation Fields
 
@@ -1124,7 +1124,7 @@ It must declare which `.zyl` file it documents, and tooling should treat a `.zyd
 Every `Screen` in the target `.zyl` file should have a corresponding `screen_docs` entry; a `.zyl` screen with no entry is not a schema error (the .zydoc file may simply be incomplete), but should be flagged by tooling as a warning.
 
 
-<a id="org8433f80"></a>
+<a id="org8d99f8a"></a>
 
 # Command Line Interface
 
@@ -1133,7 +1133,7 @@ This is the actual mechanism behind &ldquo;no feature of the GUI should be impos
 The GUI&rsquo;s role is to give beginners a comfortable environment; the CLI&rsquo;s role is to be the real development workflow they&rsquo;re gradually drawn into; both are expected to remain equally capable at every operation described below.
 
 
-<a id="org8417550"></a>
+<a id="orgfa2dfec"></a>
 
 ## Global Flags
 
@@ -1198,7 +1198,7 @@ Resolution, based on how many Zyfiles are present and whether `-b` is given:
 </table>
 
 
-<a id="org4587e54"></a>
+<a id="org4f28fa6"></a>
 
 ## Project Lifecycle
 
@@ -1206,19 +1206,19 @@ Resolution, based on how many Zyfiles are present and whether `-b` is given:
 -   `zybs build`; full pipeline: validate, resolve `.zystate`, generate output files, invoke `build_system_cmd`.
 -   `zybs generate`; same as `build` minus the final invocation; writes output files for inspection without building.
     -   `--output <file>`; restrict generation to a single declared output file.
-    -   `--debug`; prints every global var, string expansion, directory discovery, subscreen call, and output write as it happens, in a tagged, grep-friendly format; see [11.7](#orgda85640).
+    -   `--debug`; prints every global var, string expansion, directory discovery, subscreen call, and output write as it happens, in a tagged, grep-friendly format; see [11.7](#org3f5d73d).
     -   `--debug-filter <tags>`; narrows `--debug` output to a comma-separated list of tags.
 
 
-<a id="org07efded"></a>
+<a id="orgbc98049"></a>
 
 ## Screen State
 
--   `zybs peel <screen>`; see [9](#org1d6aff1).
--   `zybs return <screen>`; see [9](#org1d6aff1).
+-   `zybs peel <screen>`; see [9](#orgec9fa2a).
+-   `zybs return <screen>`; see [9](#orgec9fa2a).
 
 
-<a id="org8e456c9"></a>
+<a id="org1b8dd0d"></a>
 
 ## Inspection
 
@@ -1230,23 +1230,23 @@ collapsed screens and their modules.
 -   `zybs show <screen>`; full detail: description, responsibility, params, `uses_directories`, output/bucket, current active state.
     -   `--resolved`; prints the fully substituted command text (vars/args/discovery all resolved) rather than the raw template.
 -   `zybs modules`; lists modules in order, each with its screens and (if a current project exists) distance from the user&rsquo;s current active set.
--   `zybs which-directories <screen>`; prints a composite screen&rsquo;s computed (unioned) `uses_directories`, since that value is derived, not authored; see [3.5](#orgc0c99af).
+-   `zybs which-directories <screen>`; prints a composite screen&rsquo;s computed (unioned) `uses_directories`, since that value is derived, not authored; see [3.5](#orgd24ffe2).
 
 
-<a id="orgad89e6e"></a>
+<a id="org882f0d0"></a>
 
 ## Validation
 
 -   `zybs validate`; runs every lint/schema rule across `.zyl=/`.zydoc=/=Zyfile=/=.zystate= without building anything.
     -   `--fix`; applies only mechanically-safe fixes (a stale `.zydoc` `target_version`, `outputs~/~buckets` ordering, a missing `screen_docs` stub).
 
-Never writes to a `Zyfile`, consistent with [8.3](#org6f0a872).
+Never writes to a `Zyfile`, consistent with [8.3](#orgcd025e0).
 
 -   `--strict`; treats warnings (an unused peel call, incomplete `screen_docs`, etc.) as hard failures.
 -   `--zyl-only` / `--zydoc-only`; scopes a validation pass to one file.
 
 
-<a id="org480faff"></a>
+<a id="org7ebf8b9"></a>
 
 ## Authoring
 
@@ -1256,7 +1256,7 @@ Never writes to a `Zyfile`, consistent with [8.3](#org6f0a872).
 -   `zybs completions <shell>`; generates shell completions.
 
 
-<a id="orgda85640"></a>
+<a id="org3f5d73d"></a>
 
 ## Debug Output
 
@@ -1268,7 +1268,7 @@ Never writes to a `Zyfile`, consistent with [8.3](#org6f0a872).
 -   `[EXPAND]`; a single `$~/~@` resolution at a specific interpolation site.
 -   `[MUTATE]`; a `$`-sigiled param write changing a global var, with before/after value and the call responsible.
 
-The primary tool for diagnosing the sibling global-mutation footgun described in [6.2](#org6b69716).
+The primary tool for diagnosing the sibling global-mutation footgun described in [6.2](#org64f04c2).
 
 -   `[WRITE]`; a leaf appending resolved text to a specific `(output, bucket)` buffer.
 -   `[ASSEMBLE]`; the final per-file bucket concatenation, once traversal completes.
@@ -1282,7 +1282,7 @@ The primary tool for diagnosing the sibling global-mutation footgun described in
     [ASSEMBLE] CMakeLists.txt <- header, project_setup, targets, linking
 
 
-<a id="orgef29a13"></a>
+<a id="orgca7e6c3"></a>
 
 # Future Considerations
 
