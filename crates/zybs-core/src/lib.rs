@@ -1,16 +1,99 @@
 mod zybs_error;
 
-pub fn add(left: u64, right: u64) -> u64 {
-    left + right
+use crate::validate::Scope;
+use std::error::Error;
+use std::path::Path;
+
+type ZyBSResult = Result<(), Box<dyn Error>>;
+
+pub fn init<T: AsRef<str>>(build_system: Option<T>) -> ZyBSResult {
+    todo!()
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+pub fn build<T: AsRef<str>>(build_system: Option<T>) -> ZyBSResult {
+    todo!()
+}
 
-    #[test]
-    fn it_works() {
-        let result = add(2, 2);
-        assert_eq!(result, 4);
+pub mod generate {
+    #[derive(Clone, Debug, Default)]
+    pub enum Debug {
+        True(Vec<String>),
+        #[default]
+        False,
     }
+}
+
+pub fn generate<T: AsRef<str>, P: AsRef<Path>>(
+    build_system: Option<T>,
+    output: Option<P>,
+    debug: generate::Debug,
+) -> ZyBSResult {
+    todo!()
+}
+
+pub fn peel<T: AsRef<str>, U: AsRef<str>>(build_system: Option<T>, screen: U) -> ZyBSResult {
+    todo!()
+}
+
+pub fn zybs_return<T: AsRef<str>, U: AsRef<str>>(build_system: Option<T>, screen: U) -> ZyBSResult {
+    todo!()
+}
+
+pub fn tree<T: AsRef<str>>(build_system: Option<T>) -> ZyBSResult {
+    todo!()
+}
+
+pub fn screens<T: AsRef<str>>(build_system: Option<T>) -> ZyBSResult {
+    todo!()
+}
+
+pub fn show<T: AsRef<str>, U: AsRef<str>>(
+    build_system: Option<T>,
+    screen: U,
+    resolved: bool,
+) -> ZyBSResult {
+    todo!()
+}
+
+pub fn modules<T: AsRef<str>>(build_system: Option<T>) -> ZyBSResult {
+    todo!()
+}
+
+pub fn dirs<T: AsRef<str>, U: AsRef<str>>(build_system: Option<T>, screen: U) -> ZyBSResult {
+    todo!()
+}
+
+pub mod validate {
+    #[derive(Copy, Clone, Debug, Default)]
+    pub enum Scope {
+        #[default]
+        All,
+        ZylOnly,
+        ZydocOnly,
+    }
+}
+
+pub fn validate<T: AsRef<str>>(
+    build_system: Option<T>,
+    fix: bool,
+    strict: bool,
+    scope: Scope,
+) -> ZyBSResult {
+    todo!()
+}
+
+pub mod new {
+    #[derive(Copy, Clone, Debug)]
+    pub enum Wizard {
+        Screen,
+        ZydocEntry,
+    }
+}
+
+pub fn new<T: AsRef<str>>(build_system: Option<T>, wizard: new::Wizard) -> ZyBSResult {
+    todo!()
+}
+
+pub fn fmt<T: AsRef<str>>(build_system: Option<T>) -> ZyBSResult {
+    todo!()
 }
