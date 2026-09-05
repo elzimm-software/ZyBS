@@ -105,6 +105,7 @@ ZyBS uses three file types, each separately authored:
 <th scope="col" class="org-left">Role</th>
 </tr>
 </thead>
+
 <tbody>
 <tr>
 <td class="org-left"><code>.zyl</code></td>
@@ -112,11 +113,13 @@ ZyBS uses three file types, each separately authored:
 <td class="org-left">Defines the abstraction: the full <code>Screen</code> hierarchy for one build system. See <a href="#org524a0d0">7</a>.</td>
 </tr>
 
+
 <tr>
 <td class="org-left"><code>Zyfile</code></td>
 <td class="org-left">project user</td>
 <td class="org-left">Per-project. Selects one entry <code>Screen</code> from a <code>.zyl</code> and supplies its arguments. Custom grammar, not YAML. See <a href="#orgefe5a8e">8</a>.</td>
 </tr>
+
 
 <tr>
 <td class="org-left"><code>.zydoc</code></td>
@@ -173,6 +176,7 @@ See [6](#org7093327).
 <th scope="col" class="org-left">Description</th>
 </tr>
 </thead>
+
 <tbody>
 <tr>
 <td class="org-left"><code>id</code></td>
@@ -181,12 +185,14 @@ See [6](#org7093327).
 <td class="org-left">Unique module identifier.</td>
 </tr>
 
+
 <tr>
 <td class="org-left"><code>order</code></td>
 <td class="org-left">integer</td>
 <td class="org-left">yes</td>
 <td class="org-left">Explicit ordinal, used to compute inter-module distance for readiness cautions. Not inferred from list position.</td>
 </tr>
+
 
 <tr>
 <td class="org-left"><code>title</code></td>
@@ -195,12 +201,14 @@ See [6](#org7093327).
 <td class="org-left">Short learner-facing name.</td>
 </tr>
 
+
 <tr>
 <td class="org-left"><code>description</code></td>
 <td class="org-left">string (block)</td>
 <td class="org-left">no</td>
 <td class="org-left">Prose describing what the module covers conceptually.</td>
 </tr>
+
 
 <tr>
 <td class="org-left"><code>screens</code></td>
@@ -533,6 +541,7 @@ When present, a `.zydoc` shares the `.zyl's` base name.
 <th scope="col" class="org-left">Description</th>
 </tr>
 </thead>
+
 <tbody>
 <tr>
 <td class="org-left"><code>version</code></td>
@@ -541,12 +550,14 @@ When present, a `.zydoc` shares the `.zyl's` base name.
 <td class="org-left">ZyBS spec version this file targets.</td>
 </tr>
 
+
 <tr>
 <td class="org-left"><code>build_system</code></td>
 <td class="org-left">string</td>
 <td class="org-left">yes</td>
 <td class="org-left">Display name of the underlying build system.</td>
 </tr>
+
 
 <tr>
 <td class="org-left"><code>build_system_cmd</code></td>
@@ -555,12 +566,14 @@ When present, a `.zydoc` shares the `.zyl's` base name.
 <td class="org-left">Literal commands invoked to run the build.</td>
 </tr>
 
+
 <tr>
 <td class="org-left"><code>description</code></td>
 <td class="org-left">string (block)</td>
 <td class="org-left">no</td>
 <td class="org-left">Prose description of what this file builds.</td>
 </tr>
+
 
 <tr>
 <td class="org-left"><code>global_sigil</code></td>
@@ -569,12 +582,14 @@ When present, a `.zydoc` shares the `.zyl's` base name.
 <td class="org-left">Override for the global-var sigil; default <code>$</code>.</td>
 </tr>
 
+
 <tr>
 <td class="org-left"><code>arg_sigil</code></td>
 <td class="org-left">string</td>
 <td class="org-left">no</td>
 <td class="org-left">Override for the param sigil; default <code>@</code>.</td>
 </tr>
+
 
 <tr>
 <td class="org-left"><code>default_sep</code></td>
@@ -583,12 +598,14 @@ When present, a `.zydoc` shares the `.zyl's` base name.
 <td class="org-left">Override for the default list-join separator; default space.</td>
 </tr>
 
+
 <tr>
 <td class="org-left"><code>vars</code></td>
 <td class="org-left">map</td>
 <td class="org-left">no</td>
 <td class="org-left">Global variable map, mutable during execution.</td>
 </tr>
+
 
 <tr>
 <td class="org-left"><code>directories</code></td>
@@ -597,12 +614,14 @@ When present, a `.zydoc` shares the `.zyl's` base name.
 <td class="org-left">Default directory structure and discovery rules; see <a href="#org3c2260f">5</a>.</td>
 </tr>
 
+
 <tr>
 <td class="org-left"><code>outputs</code></td>
 <td class="org-left">list of object</td>
 <td class="org-left">no</td>
 <td class="org-left">Declared output files, each with a <code>path</code> and optional <code>buckets</code> list, for typo-catching.</td>
 </tr>
+
 
 <tr>
 <td class="org-left"><code>default_output</code></td>
@@ -611,12 +630,14 @@ When present, a `.zydoc` shares the `.zyl's` base name.
 <td class="org-left">Output file a leaf uses if it omits <code>output</code>.</td>
 </tr>
 
+
 <tr>
 <td class="org-left"><code>disallow_interpolated_paths</code></td>
 <td class="org-left">boolean</td>
 <td class="org-left">no</td>
 <td class="org-left">If true, any sigil found in a leaf&rsquo;s <code>output</code> is a hard error; default false.</td>
 </tr>
+
 
 <tr>
 <td class="org-left"><code>screens</code></td>
@@ -724,6 +745,7 @@ When present, a `.zydoc` shares the `.zyl's` base name.
 <th scope="col" class="org-left">Description</th>
 </tr>
 </thead>
+
 <tbody>
 <tr>
 <td class="org-left"><code>params</code></td>
@@ -732,12 +754,14 @@ When present, a `.zydoc` shares the `.zyl's` base name.
 <td class="org-left">Declared parameters. May be <code>$</code>-sigiled to auto-bind to a global var.</td>
 </tr>
 
+
 <tr>
 <td class="org-left"><code>commands</code></td>
 <td class="org-left">list of string, or map of string to list of string</td>
 <td class="org-left">leaves</td>
 <td class="org-left">Literal build-system code. Map form assigns per bucket; list form uses <code>bucket</code>. Mutually exclusive with <code>subscreens</code>.</td>
 </tr>
+
 
 <tr>
 <td class="org-left"><code>output</code></td>
@@ -746,6 +770,7 @@ When present, a `.zydoc` shares the `.zyl's` base name.
 <td class="org-left">Output file this leaf&rsquo;s <code>commands</code> are written to.</td>
 </tr>
 
+
 <tr>
 <td class="org-left"><code>bucket</code></td>
 <td class="org-left">string</td>
@@ -753,12 +778,14 @@ When present, a `.zydoc` shares the `.zyl's` base name.
 <td class="org-left">Which bucket of <code>output</code> this leaf targets (list form only). Defaults to the first declared bucket.</td>
 </tr>
 
+
 <tr>
 <td class="org-left"><code>uses_directories</code></td>
 <td class="org-left">list of string</td>
 <td class="org-left">leaves</td>
 <td class="org-left">Which top-matter <code>directories</code> this leaf depends on. Never declared on composites; see <a href="#org62b0148">3.5</a>.</td>
 </tr>
+
 
 <tr>
 <td class="org-left"><code>subscreens</code></td>
@@ -892,6 +919,7 @@ When present for a given build system, it entirely replaces the system-scoped fi
 <th scope="col" class="org-left">Description</th>
 </tr>
 </thead>
+
 <tbody>
 <tr>
 <td class="org-left"><code>version</code></td>
@@ -899,6 +927,7 @@ When present for a given build system, it entirely replaces the system-scoped fi
 <td class="org-left">yes</td>
 <td class="org-left">ZyBS spec version this <code>.zystate</code> targets.</td>
 </tr>
+
 
 <tr>
 <td class="org-left"><code>active_screens</code></td>
@@ -1007,6 +1036,7 @@ It must declare which `.zyl` file it documents, and tooling treats a `.zydoc` re
 <th scope="col" class="org-left">Description</th>
 </tr>
 </thead>
+
 <tbody>
 <tr>
 <td class="org-left"><code>version</code></td>
@@ -1015,12 +1045,14 @@ It must declare which `.zyl` file it documents, and tooling treats a `.zydoc` re
 <td class="org-left">ZyBS spec version this <code>.zydoc</code> file targets.</td>
 </tr>
 
+
 <tr>
 <td class="org-left"><code>target</code></td>
 <td class="org-left">string</td>
 <td class="org-left">yes</td>
 <td class="org-left">Path to the <code>.zyl</code> file this <code>.zydoc</code> file documents.</td>
 </tr>
+
 
 <tr>
 <td class="org-left"><code>target_version</code></td>
@@ -1029,12 +1061,14 @@ It must declare which `.zyl` file it documents, and tooling treats a `.zydoc` re
 <td class="org-left"><code>version</code> of the target <code>.zyl</code> file, for staleness detection.</td>
 </tr>
 
+
 <tr>
 <td class="org-left"><code>modules</code></td>
 <td class="org-left">list</td>
 <td class="org-left">yes</td>
 <td class="org-left">See <a href="#org425f280">2</a>.</td>
 </tr>
+
 
 <tr>
 <td class="org-left"><code>screen_docs</code></td>
@@ -1070,6 +1104,7 @@ It must declare which `.zyl` file it documents, and tooling treats a `.zydoc` re
 <th scope="col" class="org-left">Description</th>
 </tr>
 </thead>
+
 <tbody>
 <tr>
 <td class="org-left"><code>description</code></td>
@@ -1077,6 +1112,7 @@ It must declare which `.zyl` file it documents, and tooling treats a `.zydoc` re
 <td class="org-left">yes</td>
 <td class="org-left">What the <code>Screen</code> does, in learner-facing terms.</td>
 </tr>
+
 
 <tr>
 <td class="org-left"><code>responsibility</code></td>
@@ -1126,6 +1162,7 @@ Resolution, based on how many `Zyfiles` are present and whether `-b` is given:
 <th scope="col" class="org-left">Result</th>
 </tr>
 </thead>
+
 <tbody>
 <tr>
 <td class="org-right">1</td>
@@ -1133,11 +1170,13 @@ Resolution, based on how many `Zyfiles` are present and whether `-b` is given:
 <td class="org-left">use it</td>
 </tr>
 
+
 <tr>
 <td class="org-right">1</td>
 <td class="org-left">yes, matches</td>
 <td class="org-left">use it</td>
 </tr>
+
 
 <tr>
 <td class="org-right">1</td>
@@ -1145,17 +1184,20 @@ Resolution, based on how many `Zyfiles` are present and whether `-b` is given:
 <td class="org-left">error</td>
 </tr>
 
+
 <tr>
 <td class="org-right">2+</td>
 <td class="org-left">no</td>
 <td class="org-left">error (ambiguous)</td>
 </tr>
 
+
 <tr>
 <td class="org-right">2+</td>
 <td class="org-left">yes, matches one</td>
 <td class="org-left">use that one</td>
 </tr>
+
 
 <tr>
 <td class="org-right">2+</td>
