@@ -2,7 +2,7 @@ use clap::Args;
 
 #[derive(Args, Debug)]
 pub(crate) struct ShowArgs {
-    screen: String,
+    pub(crate) screen: String,
     #[arg(short, long)]
-    resolved: bool,
+    pub(crate) resolved: bool,
 }

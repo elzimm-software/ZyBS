@@ -5,7 +5,7 @@ use clap::Parser;
 #[command(version, about, long_about = None)] // TODO: add real about and long_about
 pub(crate) struct Args {
     #[arg(short, long, global = true)]
-    build_system: Option<String>,
+    pub(crate) build_system: Option<String>,
     #[command(subcommand)]
-    command: Commands,
+    pub(crate) command: Commands,
 }

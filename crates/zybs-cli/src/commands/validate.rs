@@ -3,11 +3,11 @@ use clap::Args;
 #[derive(Args, Debug)]
 pub(crate) struct ValidateArgs {
     #[arg(short, long)]
-    fix: bool,
+    pub(crate) fix: bool,
     #[arg(short, long)]
-    strict: bool,
+    pub(crate) strict: bool,
     #[arg(long)]
-    zyl_only: bool,
+    pub(crate) zyl_only: bool,
     #[arg(long)]
-    zydoc_only: bool,
+    pub(crate) zydoc_only: bool,
 }

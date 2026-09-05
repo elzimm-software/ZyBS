@@ -4,9 +4,9 @@ use clap::Args;
 #[derive(Args, Debug)]
 pub(crate) struct GenerateArgs {
     #[arg(short, long)]
-    output: Option<PathBuf>,
+    pub(crate) output: Option<PathBuf>,
     #[arg(short, long)]
-    debug: bool,
+    pub(crate) debug: bool,
     #[arg(short = 'F', long, value_delimiter = ',')]
-    debug_filter: Vec<String>
+    pub(crate) debug_filter: Vec<String>,
 }

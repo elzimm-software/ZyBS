@@ -3,11 +3,11 @@ use clap::{Args, Subcommand};
 #[derive(Args, Debug)]
 pub(crate) struct NewArgs {
     #[command(subcommand)]
-    command: NewCommands
+    pub(crate) command: NewCommands
 }
 
 #[derive(Subcommand, Debug)]
-enum NewCommands {
+pub(crate) enum NewCommands {
     Screen {
         name: Option<String>
     },

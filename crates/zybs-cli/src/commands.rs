@@ -6,7 +6,7 @@ mod fmt;
 mod generate;
 mod init;
 mod modules;
-mod new;
+pub(crate) mod new;
 mod peel;
 mod screens;
 mod show;

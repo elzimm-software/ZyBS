@@ -1,12 +1,12 @@
 use clap::{Args, ValueEnum};
 
 #[derive(ValueEnum, Clone, Debug)]
-enum Shell {
+pub(crate) enum Shell {
     Bash,
     Zsh,
 }
 
 #[derive(Args, Debug)]
 pub(crate) struct CompletionsArgs {
-    shell: Shell,
+    pub(crate) shell: Shell,
 }
