@@ -1,6 +1,5 @@
-use crate::commands::Commands;
-use crate::commands::new::NewCommands;
-use clap::{Parser, Subcommand};
+use crate::commands::{Commands, new::NewCommands};
+use clap::Parser;
 use std::error::Error;
 
 mod args;
@@ -50,7 +49,9 @@ fn main() -> Result<(), Box<dyn Error>> {
             };
             zybs_core::new(args.build_system, wizard)
         }
-        Commands::Fmt(_) => {zybs_core::fmt(args.build_system)}
-        Commands::Completions(_) => {unimplemented!()}
+        Commands::Fmt(_) => zybs_core::fmt(args.build_system),
+        Commands::Completions(_) => {
+            unimplemented!()
+        }
     }
 }
