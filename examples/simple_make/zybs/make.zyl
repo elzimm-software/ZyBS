@@ -1,0 +1,107 @@
+version: 0.1.0
+build_system: GNU Make
+build_cmd:
+  - make
+description: |
+  Builds a simple project with make.
+  Both source and header files go into src/ and are automatically discovered.
+
+outputs:
+  - path: Makefile
+    buckets: [variables, rules]
+
+directories:
+  - build
+  - src: "$sources:*.c"
+
+ignored:
+  - build
+
+vars:
+  cc: clang
+  c_flags: [-Wall]
+  target: test
+
+screens:
+  phony:
+    bucket: variables
+    uses_directories: []
+    commands:
+      - .PHONY: all clean
+
+  config_variables:
+    params: [cc, c_flags, sources, source_dir, build_dir, target]
+    bucket: variables
+    commands: |
+      CC := @cc
+      CFLAGS := @c_flags
+      SOURCES := @sources
+      SOURCE_DIR := @source_dir
+      BUILD_DIR := @build_dir
+      TARGET := @target
+
+  derived_variables:
+    bucket: variables
+    commands: |
+      OBJECTS := $(SOURCES:%.c=$(BUILD_DIR)/%.o)
+
+  rule_all:
+    bucket: rules
+    commands: |
+      all: $(BUILD_DIR)/$(TARGET)
+
+  rule_target:
+    bucket: rules
+    commands: |
+      $(BUILD_DIR)/$(TARGET): $(OBJECTS)
+          $(CC) $(CFLAGS) -c $< -o $@
+
+  rule_headered_object:
+    bucket: rules
+    commands: |
+      $(BUILD_DIR)/%.o: $(SOURCE_DIR)/%.c $(SOURCE_DIR)/%.h $(BUILD_DIR)
+          $(CC) $(CFLAGS) -c $< -o $@
+
+  rule_source_object:
+    bucket: rules
+    commands: |
+      $(BUILD_DIR)/%.o: $(SOURCE_DIR)/%.c $(BUILD_DIR)
+          $(CC) $(CFLAGS) -c $< -o $@
+
+  rule_build_dir:
+    bucket: rules
+    commands: |
+      $(BUILD_DIR):
+          mkdir -p $(BUILD_DIR)
+
+  rule_clean:
+    bucket: rules
+    commands: |
+      clean:
+          rm -rf $(BUILD_DIR)
+
+  file_rules:
+    subscreens:
+      - screen: rule_target
+      - screen: rule_headered_object
+      - screen: rule_source_object
+
+  rules:
+    subscreens:
+      - screen: rule_all
+      - screen: file_rules
+      - screen: rule_clean
+
+  variables:
+    params: [source_dir, build_dir]
+    subscreens:
+      - screen: config_variables
+        params: [$cc, $c_flags, "@sources:*.c", @source_dir, @build_dir, $target]
+
+  build:
+    uses_directories: [src, build]
+    subscreens:
+      - screen: phony
+      - screen: variables
+        params: [src, build]
+      - screen: rules
