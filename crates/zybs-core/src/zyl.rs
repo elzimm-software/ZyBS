@@ -1,7 +1,33 @@
 use std::collections::HashMap;
+use std::ops::Deref;
 use std::path::PathBuf;
 use std::process::Command;
 use crate::zyl::screen::ScreenKind;
+
+pub(crate) enum LazyOr<T> {
+    Lazy((String, Box<dyn Fn(String) -> T>)),
+    Value(T),
+}
+
+impl<T> LazyOr<T> {
+
+    pub fn new(raw: String, parser: impl Fn(String) -> T + 'static) -> Self {
+        Self::Lazy((raw, Box::new(parser)))
+    }
+
+    pub fn from(val: T) -> Self {
+        Self::Value(val)
+    }
+
+    pub fn get(self) -> T {
+        match self {
+            LazyOr::Lazy((s, f)) => {
+                f(s)
+            }
+            LazyOr::Value(v) => {v}
+        }
+    }
+}
 
 pub(crate) struct Output {
     path: PathBuf,
@@ -52,16 +78,16 @@ mod screen {
 
 pub(crate) struct Zyl {
     // skipping format version for MVP, still 1.0 goal
-    build_system: String,
-    build_cmd: Vec<Command>,
+    build_system: LazyOr<String>,
+    build_cmd: LazyOr<Vec<Command>>,
     // description: String, // is this more of a .zydoc thing?
-    global_sigil: char,
-    arg_sigil: char,
-    default_sep: String,
-    disallow_interpolated_paths: bool,
-    outputs: Vec<Output>,
-    default_output: usize,
-    directories: Vec<Directory>,
-    vars: HashMap<String, Variable>,
-    screens: Vec<Screen>,
+    global_sigil: LazyOr<char>,
+    arg_sigil: LazyOr<char>,
+    default_sep: LazyOr<String>,
+    disallow_interpolated_paths: LazyOr<bool>,
+    outputs: LazyOr<Vec<Output>>,
+    default_output: LazyOr<usize>,
+    directories: LazyOr<Vec<Directory>>,
+    vars: LazyOr<HashMap<String, Variable>>,
+    screens: LazyOr<Vec<Screen>>,
 }
